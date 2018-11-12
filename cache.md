@@ -82,3 +82,28 @@ async function main () {
 
 main().catch(console.error)
 ```
+
+## Cache Frequency
+
+Sets the expiration time based on the frequency the data is being called.
+```js
+class CacheExpired {
+	constructor() {
+  	this.counter = 1
+    this.lastTimestamp = Date.now()
+    this.nextReset = this.lastTimestamp + 60 * 1000 // 1 Minute
+  }
+  expired(data) {
+  	this.counter++
+    if (Date.now() > this.nextReset) {
+    	// Set reset proportional to preveious calls - more frequent means longer to reset 
+      this.nextReset = Math.log(this.counter) * 1000 + Date.now()
+      // Reset counter 
+      this.counter = 1 // Math.log(0) is -infinity
+      // Return true means the client need to fetch and set the data in the cache again.
+			return true
+    }
+  	return false
+  }
+}
+```
