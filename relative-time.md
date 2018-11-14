@@ -16,7 +16,7 @@ function timeString(timestamp, since = Date.now()) {
   while (u) {
   	// It should not be more than 'hour'.
   	if (i === metrics.length) {
-    	result.push(symbols[i-1], u*metrics[i-1])
+      result[i*2-1] += u*metrics[i-1]
     	break
     } else {
     	result.push(symbols[i], u % metrics[i])
@@ -33,7 +33,33 @@ function timeString(timestamp, since = Date.now()) {
   }
   return result.join('')
 }
-const onemonth = 30 * 24 * 60 * 60 * 1000
-console.log('onemonth', onemonth)
+const second = 1000 
+const minute = second * 60
+const hour = minute * 60
+const onemonth = 30 * 24 * hour
 console.log(timeString(new Date().getTime()-onemonth))
+console.log(timeString(new Date().getTime()-24*hour))
+console.log(timeString(new Date().getTime()-14*hour))
+console.log(timeString(new Date().getTime()-7*14*hour))
+console.log(timeString(new Date().getTime()-50 * second))
+console.log(timeString(new Date().getTime()-60 * second))
+console.log(timeString(new Date().getTime()-120 * second))
+console.log(timeString(new Date().getTime()-126 * second))
+console.log(timeString(new Date().getTime()-32 * minute - 10*second))
+console.log(timeString(new Date().getTime()-126 * minute))
+```
+
+Output:
+
+```
+720h
+24h
+14h
+98h
+50s
+1m
+2m
+2m6s
+32m10s
+2h6m
 ```
