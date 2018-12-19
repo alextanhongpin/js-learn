@@ -3,9 +3,18 @@
 
 If the user can purchase an item only after 12:00 A.M. SGT, then the server should validate it correctly.
 Given the following timezone:
+
 ```
 1545148800000 is 19 Dec 12:00AM
 ```
+
+- client must now send ISO8601 datetime with timezone info (e.g. new Date().toISOString())
+- date range calculation will be done on the client side with the local timezone, but validated on server side
+- 1 day: means same date, just send startDate = endDate, e.g. start 2018-01-19, end 2018-01-19, server will set the startDate to 00:00:00 and endDate to 23:59:59
+- 2 days: means two date, e.g. 2018-01-19 to 2018-01-20
+- hours, minutes and seconds do not matter, but will still be kept at the server side
+- datetime is stored as utc in the database
+- if timezone info is required, create a new column with `varchar(32)` to keep the timezone
 
 Test Cases:
 ```js
