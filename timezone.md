@@ -8,7 +8,7 @@ Given the following timezone:
 1545148800000 is 19 Dec 12:00AM
 ```
 
-- client must now send ISO8601 datetime with timezone info (e.g. new Date().toISOString())
+- client must now send RFC3339 (not ISO8601) datetime with timezone info (e.g. moment().format() by default formats the date to RFC3339)
 - date range calculation will be done on the client side with the local timezone, but validated on server side
 - 1 day: means same date, just send startDate = endDate, e.g. start 2018-01-19, end 2018-01-19, server will set the startDate to 00:00:00 and endDate to 23:59:59
 - 2 days: means two date, e.g. 2018-01-19 to 2018-01-20
