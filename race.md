@@ -3,26 +3,39 @@
 Mimicking golang's context cancellation with promises.
 
 ```js
-function cancel(duration) {
-	return new Promise((resolve, reject) => {
-  	setTimeout(() => {
-    	reject(new Error('timeout exceeded'))
-    }, duration)
+class TimeoutError extends Error {
+  constructor(props) {
+    super(props)
+    this.name = 'TimeoutError'
+  }
+}
+
+function timeout(durationInMs = 0) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      return reject(new TimeoutError(`timeout after ${durationInMs}ms`))
+    }, durationInMs)
   })
 }
 
-function doWork(duration) {
-	return new Promise((resolve, reject) => {
-  	setTimeout(() => {
-    	resolve(true)
-    }, duration)
+function doWork(durationInMs = 0) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      return resolve(true)
+    }, durationInMs)
   })
 }
-
 async function main() {
-	const result = await Promise.race([cancel(500), doWork(1000)])
-  console.log(result)
+  try {
+    const result = await Promise.race([timeout(500), doWork(1000)])
+    console.log('got result', result)
+  } catch (error) {
+    console.log(error)
+    console.log([error.name, error.message].join(': '))
+  }
 }
+main().catch(console.error)
 
-main().then(console.log).catch(console.error)
+// TimeoutError: timeout after 500ms
+// TimeoutError: timeout after 500ms
 ```
