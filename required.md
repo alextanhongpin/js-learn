@@ -17,3 +17,24 @@ const withNullHandler = new Proxy({a: 1}, nullHandler)
 console.log(withNullHandler.a)
 console.log(withNullHandler.ds)
 ```
+
+
+## Validating multiple fields
+
+```js
+function isDefined(value) {
+  return value !== null && value !== undefined
+}
+
+function isRequired(obj, ...fields) {
+  for (let field of fields) {
+    if (!isDefined(obj[field])) {
+      throw new Error(`${field} is required`)
+    }
+  }
+}
+isRequired({
+  hello: 'world'
+}, 'hello', 'world', 'car')
+// Error: world is required
+```
