@@ -52,3 +52,33 @@ hello
 throttle
 hello
 ```
+
+## Another throttle 
+
+```js
+
+function Throttler(duration: number) {
+    let timeout
+    return function (fn) {
+        console.log('throttled')
+        timeout && clearTimeout(timeout)
+        timeout = setTimeout(() => {
+            fn && fn()
+        }, duration)   
+    }
+}
+
+const throttle = Throttler(500)
+throttle(function () {
+    console.log('hello')
+})
+throttle(function () {
+    console.log('hello')
+})
+throttle(function () {
+    console.log('hello')
+})
+throttle(function () {
+    console.log('hello')
+})
+```
