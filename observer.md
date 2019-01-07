@@ -22,14 +22,28 @@ class Observable implements Observer {
     }
     this.events[event].push(fn)
   }
+  off(event: string, fn: Function) {
+    if (event in this.events) {
+      this.events[event] = this.events[event].filter((storedFn: Function) => {
+        return storedFn !== fn
+      })
+      console.log(`${event} is removed`)
+    }
+  }
+  offAll(event: string) {
+    delete this.events[event]
+  }
 }
 
 const obs = new Observable()
-obs.on('greet', function (msg: string) {
+function greet(msg: string) {
   console.log(`hello ${msg}!`)
-})
+}
+obs.on('greet', greet)
 
 obs.emit('greet', 'John')
+obs.off('greet', greet)
+obs.emit('greet', 'Lennon')
 
 class ObservableName extends Observable {
   private _name: string
