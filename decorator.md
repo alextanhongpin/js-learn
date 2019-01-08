@@ -50,3 +50,62 @@ after
 decorator: after
 100
 ```
+
+## Mixins-style decorator
+
+```ts
+// Replace the {} with the Class you want to extend.
+// type Constructor<T = {}> = new (...args: any[]) => T;
+type Constructor<T = Drawable> = new (...args: any[]) => T;
+
+function Invisibility<TBase extends Constructor>(Base: TBase) {
+  return class extends Base {
+    private isInvisible = false
+    private timeout: any
+
+    enterInvisibilityMode(duration: number) {
+      this.isInvisible = true
+      this.timeout && window.clearTimeout(this.timeout)
+      this.timeout = window.setTimeout(() => {
+        this.isInvisible = true
+      }, duration)
+    }
+  }
+}
+
+function HealthBar<TBase extends Constructor>(Base: TBase) {
+  return class extends Base {
+    private hpX: number;
+    private hpY: number;
+    private hp: number;
+    draw() {
+      super.draw()
+      console.log('draw health bar', this.x, this.y)
+    }
+  } 
+}
+
+interface Drawable {
+  x: number
+  y: number
+  draw(): void
+}
+
+// This is however tying the functionality straight to the class,
+// and therefore not preferable.
+// @HealthBar
+class Ship implements Drawable {
+  x: number
+  y: number
+  constructor(x: number, y: number) {
+    this.x = x
+    this.y = y
+  }
+  draw() {
+    console.log('draw ship', this.x, this.y)
+  }
+}
+// const ship = new Ship()
+const ship = new (HealthBar(Ship))(5, 10)
+ship.draw()
+```
