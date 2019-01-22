@@ -29,9 +29,12 @@ timeit('loop of', function () {
 timeit('reduce', function () {
   const total = items.reduce((sum, i) => sum + 1, 0)
 })
+```
 
+Output:
 
-// loop: took 3.2999999821186066ms
-// loop of: took 4.300000029616058ms
-// reduce: took 19.899999955669045ms
+```
+loop: took 10.899999993853271ms
+loop of: took 42.69999999087304ms
+reduce: took 23.099999991245568ms
 ```
