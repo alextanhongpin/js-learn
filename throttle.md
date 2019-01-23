@@ -82,3 +82,52 @@ throttle(function () {
     console.log('hello')
 })
 ```
+
+## Mutex
+
+```js
+function delay(duration): Promise<boolean> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(true)
+    }, duration)
+  })
+}
+
+function mutex() {
+  let isLocked = false
+  return function (target, name, descriptor) {
+    const original = descriptor.value
+    if (typeof original === 'function') {
+      descriptor.value = async function (...args) {
+        if (isLocked) {
+          console.log('isLocked')
+          return
+        }
+        isLocked = true
+        await original.apply(this, args)
+        isLocked = false
+      }
+    }
+    return descriptor
+  }
+}
+
+class UI {
+  @mutex()
+  async submit() {
+    console.log('submit: before')
+    await delay(1000)
+    console.log('submit: after')
+  }
+}
+
+const ui = new UI()
+ui.submit()
+ui.submit()
+ui.submit()
+
+setTimeout(() => {
+  ui.submit()
+}, 1500)
+```
