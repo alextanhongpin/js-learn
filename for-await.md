@@ -23,7 +23,7 @@ main().catch(console.error)
 ```
 
 
-## Throttling 
+## Throttling with for ... await
 
 ```js
 function asyncTask(duration = 1000) {
@@ -31,7 +31,6 @@ function asyncTask(duration = 1000) {
     setTimeout(resolve, duration, duration)
   })
 }
-
 
 async function main() {
   const items = Array(10).fill(() => asyncTask()) {
@@ -72,6 +71,52 @@ async function* streamThrottle(n = 5, ...items) {
       result.push(task)
     }
     yield* result
+  }
+}
+main().catch()
+```
+
+## Throttling with Promise.all
+
+```js
+function asyncTask(duration = 1000) {
+  return new Promise(resolve => {
+    setTimeout(resolve, duration, duration)
+  })
+}
+
+
+async function main() {
+  const items = Array(10).fill(() => asyncTask()) {
+    const generator = batchThrottlePromises(3, ...items)
+    console.log(await generator.next())
+    for await (let result of generator) {
+      console.log(result)
+    }
+  }
+
+  {
+    const generator = streamThrottlePromises(3, ...items)
+    for await (let result of generator) {
+      console.log(result)
+    }
+  }
+
+}
+
+async function* batchThrottlePromises(n = 5, ...items) {
+  while (items.length) {
+    const tasks = items.splice(0, n).map(fn => fn())
+    console.log('doing tasks', tasks.length, tasks)
+    yield Promise.all(tasks)
+  }
+}
+
+async function* streamThrottlePromises(n = 5, ...items) {
+  while (items.length) {
+    const tasks = items.splice(0, n).map(fn => fn())
+    console.log('doing tasks', tasks.length, tasks)
+    yield* await Promise.all(tasks)
   }
 }
 main().catch()
