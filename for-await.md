@@ -121,3 +121,41 @@ async function* streamThrottlePromises(n = 5, ...items) {
 }
 main().catch()
 ```
+
+
+## Promise Pool
+
+```js
+function PromisePool (limit = 5) {
+  return async function * generator (...tasks) {
+    while (tasks.length) {
+      const todos = tasks.splice(0, limit).map(fn => fn())
+      yield * await Promise.all(todos)
+    }
+  }
+}
+
+function delay (duration = Math.random() * 1000) {
+  return new Promise(resolve => {
+    setTimeout(resolve, duration, duration)
+  })
+}
+
+async function asyncTask (duration) {
+  return delay(duration)
+}
+
+async function main () {
+  const pool = PromisePool(5)
+  const tasks = Array(100)
+    .fill(0)
+    .map(_ => Math.random() * 250 + 250)
+    .map((duration) => () => asyncTask(duration))
+  const generator = await pool(...tasks)
+  for await (let result of generator) {
+    console.log(await result)
+  }
+}
+
+main().catch(console.error)
+```
