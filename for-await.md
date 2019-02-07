@@ -192,33 +192,50 @@ function delay (duration = Math.random() * 1000, output = true) {
   })
 }
 
+async function randomError (duration) {
+  await delay(duration)
+  if (Math.random() < 0.25) {
+    throw new Error('WorkError')
+  }
+  return Math.random()
+}
+
 async function asyncTask (duration) {
-  return delay(duration, [true, null])
+  try {
+    const result = await randomError(duration)
+    return [result, null]
+  } catch (error) {
+    return [null, error]
+  }
 }
 
 async function main () {
-  const pool = PromisePool(5, 0.2 * SECOND, 0.45 * SECOND)
+  const pool = PromisePool(5, 0.25 * SECOND, 0.5 * SECOND)
   const tasks = Array(100)
     .fill(0)
     .map(_ => Math.random() * 250 + 250)
     .map((duration) => () => asyncTask(duration))
   const generator = await pool(...tasks)
   let counter = 0
+  let errors = 0
   for await (const [res, err] of generator) {
     if (err) {
       // Handle error
+      if (err.message !== 'rate-limit' && err.message !== 'timeout') {
+        errors++
+      }
       console.log(err)
       continue
     }
     if (res) {
       // Got result, else timeout if both is empty.
       console.log('result', res)
+      counter++
     } else {
       // Timeout.
     }
-    counter++
   }
-  console.log(`processed ${counter} out of ${tasks.length}`)
+  console.log(`processed ${counter} out of ${tasks.length} with ${errors} errors`)
 }
 
 main().catch(console.error)
