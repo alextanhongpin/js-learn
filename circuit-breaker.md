@@ -3,6 +3,13 @@
 ```js
 const SECOND = 1000
 
+class CircuitBreakerError extends Error {
+  constructor (props) {
+    super(props)
+    this.name = 'CircuitBreakerError'
+  }
+}
+
 class CircuitBreaker {
   constructor (threshold = 3, timeout = 3 * SECOND) {
     this.threshold = threshold
@@ -48,12 +55,11 @@ class Open {
     this.context.timestamp = Date.now()
   }
   async handle (task, ...args) {
-    await delay()
     if (Date.now() - this.context.timestamp > this.context.timeout) {
       this.context.next(new HalfOpen(this.context))
-      throw new Error('half-open')
+      throw new CircuitBreakerError('half-open')
     }
-    throw new Error('open')
+    throw new CircuitBreakerError('open')
   }
 }
 
@@ -98,6 +104,9 @@ async function main () {
       const result = await circuit.handle(asyncTask, state)
       console.log(result)
     } catch (error) {
+      if (error instanceof CircuitBreakerError && error.message === 'open') {
+        await delay()
+      }
       console.log(error)
     }
   }
