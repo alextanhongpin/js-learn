@@ -153,7 +153,7 @@ async function main () {
     .map((duration) => () => asyncTask(duration))
   const generator = await pool(...tasks)
   for await (let result of generator) {
-    console.log(await result)
+    console.log(result)
   }
 }
 
