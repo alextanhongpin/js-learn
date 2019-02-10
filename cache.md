@@ -88,22 +88,91 @@ main().catch(console.error)
 Sets the expiration time based on the frequency the data is being called.
 ```js
 class CacheExpired {
-	constructor() {
-  	this.counter = 1
+  constructor() {
+    this.counter = 1
     this.lastTimestamp = Date.now()
     this.nextReset = this.lastTimestamp + 60 * 1000 // 1 Minute
   }
   expired(data) {
-  	this.counter++
+    this.counter++
     if (Date.now() > this.nextReset) {
-    	// Set reset proportional to preveious calls - more frequent means longer to reset 
+      // Set reset proportional to preveious calls - more frequent means longer to reset 
       this.nextReset = Math.log(this.counter) * 1000 + Date.now()
       // Reset counter 
       this.counter = 1 // Math.log(0) is -infinity
       // Return true means the client need to fetch and set the data in the cache again.
-			return true
+      return true
     }
-  	return false
+    return false
   }
 }
+```
+
+## Caching Asynchronous Task
+
+With `Map`, requires a unique identifier:
+
+```js
+function Cache () {
+  const cache = new Map()
+  return async function (fn, key, ...args) {
+    // Why not ...args? Because a new instance is created each time,
+    // and WeakMap treats them as a new entry.
+    if (cache.has(key)) return cache.get(key)
+    const result = await fn.apply(this, args)
+    cache.set(key, result)
+    return result
+  }
+}
+
+function delay (duration) {
+  console.log('executed')
+  return new Promise(resolve => setTimeout(resolve, duration, duration))
+}
+
+async function main () {
+  const cache = new Cache()
+  for (let i = 0; i < 5; i += 1) {
+    const result = await cache(delay, 1, 1000)
+    console.log(result)
+  }
+}
+
+main().catch(console.error)
+```
+
+With `WeakMap`, the request instance needs to by reference:
+
+```js
+function Cache () {
+  const cache = new WeakMap()
+  return async function (fn, args) {
+    // Why not ...args? Because a new instance is created each time,
+    // and WeakMap treats them as a new entry.
+    if (cache.has(args)) return cache.get(args)
+    const result = await fn.apply(this, args)
+    cache.set(args, result)
+    return result
+  }
+}
+
+function delay (duration) {
+  console.log('executed')
+  return new Promise(resolve => setTimeout(resolve, duration, duration))
+}
+
+async function main () {
+  const cache = new Cache()
+  const payload = [1000]
+  for (let i = 0; i < 5; i += 1) {
+    // This will not be cached - the payload is recreated every time.
+    // const result = await cache(delay, [1000])
+
+    // This will be cached.
+    const result = await cache(delay, payload)
+    console.log(result)
+  }
+}
+
+main().catch(console.error)
 ```
