@@ -240,3 +240,100 @@ async function main () {
 
 main().catch(console.error)
 ```
+
+
+## With Retry
+
+```js
+// batching Promises.all
+
+const SECOND = 1000
+function PromisePool (maxConcurrency = 5, minWaitTime = SECOND, timeoutInSeconds = 5 * SECOND) {
+  return async function * (...asyncTasks) {
+    while (asyncTasks.length) {
+      const tasks = asyncTasks.splice(0, maxConcurrency).map(fn => fn()).concat([
+        delay(minWaitTime, [, 'waited'])
+      ])
+      const timeout = [delay(timeoutInSeconds, [, 'timeout'])]
+      yield * await Promise.race([
+        Promise.all(tasks), Promise.all(timeout)
+      ])
+    }
+  }
+}
+
+async function delay (durationInSeconds = SECOND, result = true) {
+  return new Promise(resolve => setTimeout(resolve, durationInSeconds, result))
+}
+
+async function delayOrError () {
+  if (Math.random() < 0.4) throw new Error('invalid task')
+  const duration = Math.random() * 1000 + 500
+  return delay(duration, duration)
+}
+
+async function mockAsyncTask () {
+  try {
+    const result = await delayOrError()
+    return [result ]
+  } catch (error) {
+    return [, error]
+  }
+}
+
+async function main () {
+  const retry = Retry(10)
+  const asyncTasks = Array(100)
+    .fill(() => retry(mockAsyncTask))
+
+  const pool = PromisePool(5, 2 * SECOND, 10 * SECOND)
+  let counter = 0
+  for await (const [result, error] of pool(...asyncTasks)) {
+    if (error) {
+      if (error instanceof Error) {
+        console.log(error.message)
+      } else {
+        switch (error) {
+          case 'timeout':
+            console.log('isTimeout')
+            break
+          case 'waited':
+            console.log('waited')
+            break
+        }
+      }
+      continue
+    }
+    counter++
+    console.log(result)
+  }
+  console.log(`${counter} of ${asyncTasks.length} completed`)
+}
+
+function Jitter (min = 500, max = 10000) {
+  return function (i) {
+    return Math.round(Math.random() * max + min)
+  }
+}
+
+function Retry (threshold = 3, algorithm = Jitter(500, 1000)) {
+  return async function (fn, ...args) {
+    let i = 0
+    while (i < threshold) {
+      const [result, err] = await fn.apply(this, args)
+      if (err) {
+        i++
+        const duration = algorithm(i)
+        console.log(`retrying in ${duration} milliseconds, retry=${i}`)
+        await delay(duration)
+        continue
+      }
+      console.log('got result', result)
+      return [result]
+    }
+    return [, new Error('RetryError')]
+  }
+}
+
+main().catch(console.error)
+```
