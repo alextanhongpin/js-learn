@@ -25,3 +25,61 @@ const fetchUsers = () => async (dispatch) => {
     }
 }
 ```
+
+# React context and reducer with TypeScript
+
+```tsx
+import React, { useReducer, Dispatch, Reducer } from 'react';
+
+import { A, B } from './models';
+
+interface State {
+  a: A[];
+  b: Map<string, B>;
+}
+
+type Action =
+  | { type: 'SET_A'; data: A[] }
+  | { type: 'SET_B'; data: B[] };
+
+export interface HomePageContext {
+  state: State;
+  dispatch: Dispatch<Action>;
+}
+
+const initialState = {
+  a: [],
+  b: new Map()
+};
+
+const PageContext = React.createContext<HomePageContext>({
+  state: initialState,
+  dispatch: function(act: Action) {},
+});
+
+const reducer: Reducer<State, Action> = (
+  state: State,
+  action: Action,
+): State => {
+  switch (action.type) {
+    case 'SET_A':
+      return { ...state, a: action.data };
+    case 'SET_EMPLOYEES':
+       const dict = state.b
+       for (let emp of action.data) {
+	       dict.set(emp.id, emp)
+       }
+      return { ...state, a: action.data, b: dict };
+    default:
+      return state;
+  }
+};
+
+export function PageContextProvider({ children }: any) {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const value = { state, dispatch };
+  return <PageContext.Provider value={value}>{children}</PageContext.Provider>;
+}
+
+export default PageContext;
+```
