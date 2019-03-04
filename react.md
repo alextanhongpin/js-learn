@@ -83,3 +83,21 @@ export function PageContextProvider({ children }: any) {
 
 export default PageContext;
 ```
+
+## Use Context
+
+```
+export const TableHeader: FunctionComponent<TableHeaderProps> = ({ keys }) => {
+  const columns = keys.map((key) => <Table.HeaderCell>{key}</Table.HeaderCell>);
+  return (
+    <Table.Header>
+      <Table.Row>{columns}</Table.Row>
+    </Table.Header>
+  );
+};
+
+function View({ api }: any) {
+	const {state, dispatch} = useContext<HomePageContext>(PageContext)
+	// ...
+}
+```
