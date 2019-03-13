@@ -224,3 +224,218 @@ async function main () {
 
 main().catch(console.error)
 ```
+
+## Based on UML state diagram
+
+```js
+const SECOND = 1000
+
+const initialState = {
+  failureCounter: 0,
+  failureThreshold: 5,
+  successCounter: 0,
+  successThreshold: 5,
+  timer: null,
+  timeout: 5 * SECOND
+}
+
+class CircuitBreaker {
+  constructor (state = { ...initialState }) {
+    this.algorithm = new Closed(state)
+  }
+  async debug (fn, ...args) {
+    if (this.algorithm instanceof Closed) {
+      console.log('state: Closed')
+    }
+    if (this.algorithm instanceof Opened) {
+      console.log('state: Opened')
+    }
+    if (this.algorithm instanceof HalfOpened) {
+      console.log('state: Half-Opened')
+    }
+    return this.do(fn, ...args)
+  }
+  async do (fn, ...args) {
+    return this.algorithm.next(this).do(fn, ...args)
+  }
+}
+
+class Closed {
+  constructor (state) {
+    this.state = this.resetFailureCounter(state)
+  }
+  next (circuitBreaker) {
+    circuitBreaker.algorithm = this.isFailureThresholdReached()
+      ? new Opened(this.state)
+      : this
+    return circuitBreaker.algorithm
+  }
+  resetFailureCounter (state) {
+    return {
+      ...state,
+      failureCounter: 0
+    }
+  }
+  isFailureThresholdReached () {
+    const {
+      failureCounter,
+      failureThreshold
+    } = this.state
+    return failureCounter > failureThreshold
+  }
+  incrementFailureCounter (state) {
+    return {
+      ...state,
+      failureCounter: state.failureCounter + 1
+    }
+  }
+  async do (fn, ...args) {
+    try {
+      const result = await fn.apply(this, args)
+      return result
+    } catch (error) {
+      this.state = this.incrementFailureCounter(this.state)
+      throw error
+    }
+  }
+}
+
+class Opened {
+  constructor (state) {
+    this.state = this.startTimeoutTimer(state)
+  }
+  startTimeoutTimer (state) {
+    return {
+      ...state,
+      timer: Date.now()
+    }
+  }
+  next (circuitBreaker) {
+    circuitBreaker.algorithm = this.isTimeoutTimerExpired()
+      ? new HalfOpened(this.state)
+      : this
+    return circuitBreaker.algorithm
+  }
+  async do (fn, ...args) {
+    throw new Error('too many requests')
+  }
+  isTimeoutTimerExpired () {
+    const {
+      timer,
+      timeout
+    } = this.state
+    return Date.now() - timer > timeout
+  }
+}
+
+class HalfOpened {
+  constructor (state) {
+    this.state = this.resetSuccessCounter(state)
+    this.failed = false
+  }
+  resetSuccessCounter (state) {
+    return {
+      ...state,
+      successCounter: 0
+    }
+  }
+  incrementSuccessCounter (state) {
+    return {
+      ...state,
+      successCounter: state.successCounter + 1
+    }
+  }
+  isSuccessCountThresholdReached () {
+    const {
+      successCounter,
+      successThreshold
+    } = this.state
+    return successCounter > successThreshold
+  }
+  next (circuitBreaker) {
+    circuitBreaker.algorithm = this.isSuccessCountThresholdReached()
+      ? new Closed(this.state)
+      : this.failed
+        ? new Opened(this.state)
+        : this
+    return circuitBreaker.algorithm
+  }
+  async do (fn, ...args) {
+    try {
+      const result = await fn.apply(this, args)
+      this.state = this.incrementSuccessCounter(this.state)
+      return result
+    } catch (error) {
+      this.failed = true
+      throw error
+    }
+  }
+}
+
+async function delay (duration = 1000, value = true) {
+  return new Promise((resolve, reject) =>
+    setTimeout(() => resolve(value), duration))
+}
+
+async function task (fail) {
+  if (fail) {
+    throw new Error('bad request')
+  }
+  await delay(100)
+  return 'completed'
+}
+async function main () {
+  console.log('starting')
+  const state = {
+    ...initialState,
+    timeout: 1 * SECOND
+  }
+  const cb = new CircuitBreaker(state)
+  for (let i = 0; i < 10; i += 1) {
+    try {
+      const result = await cb.do(task, true)
+      console.log('result', result)
+    } catch (error) {
+      console.log('error', error.message)
+    }
+  }
+
+  await delay(1250)
+
+  for (let i = 0; i < 10; i += 1) {
+    try {
+      const result = await cb.do(task, false)
+      console.log('result', result)
+    } catch (error) {
+      console.log('error', error.message)
+    }
+  }
+}
+
+main().catch(console.error)
+
+// Closed
+// entry/ reset failure counter
+// do/ if operation succeeds
+// return result
+// else
+// increment failure counter
+// return failure
+// -> Failure threshold reached
+
+// Open
+// entry/start timeout timer
+// do/ return failure
+// exit
+// -> Timeout timer expired
+// <- Operation Failed
+
+// Half-open
+// entry/ reset success counter
+// do/ if operation succeeds
+// increment success counter
+// return result
+// else
+// return failure
+// -> Success count threshold reached
+```
