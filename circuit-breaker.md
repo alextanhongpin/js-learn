@@ -609,3 +609,142 @@ async function main () {
 
 main().catch(console.error)
 ```
+
+## Alternative implementation
+
+```js
+const time = {
+    Millisecond: 100,
+    Second: 1000,
+    Minute: 1000 * 60,
+    Hour: 1000 * 60 * 60,
+    Day: 1000 * 60 * 60 * 24,
+}
+
+const CLOSED = 'closed'
+const OPENED = 'opened'
+const HALF_OPENED = 'half-opened'
+
+
+function CircuitBreaker() {
+    const state = Object.seal({
+        successCounter: 0,
+        failureCounter: 0,
+        successThreshold: 5,
+        failureThreshold: 5,
+        timer: null,
+        timeout: 1 * time.Second,
+        type: CLOSED,
+        isOperationFailed: false
+    })
+
+    const isFailureThresholdReached = () => state.failureCounter > state.failureThreshold
+    const isTimeoutTimerExpired = () => Date.now() - state.timer > state.timeout
+    const isOperationFailed = () => state.isOperationFailed
+    const isSuccessCountThresholdReached = () => state.successCounter > state.successThreshold
+    const incrementSuccessCounter = () => state.successCounter++
+    const incrementFailureCounter = () => state.failureCounter++
+    const startTimeoutTimer = () => state.timer = Date.now()
+    const resetSuccessCounter = () => state.successCounter = 0
+    const resetFailureCounter = () => state.failureCounter = 0
+
+    const opened = () => {
+        state.type = OPENED
+        state.isOperationFailed = false
+        startTimeoutTimer()
+
+    }
+
+    const closed = () => {
+        state.type = CLOSED
+        resetFailureCounter()
+    }
+
+    const halfOpened = () => {
+        state.type = HALF_OPENED
+        resetSuccessCounter()
+    }
+
+    const handleSuccessForState = {
+        [CLOSED]: () => null,
+        [OPENED]: () => null,
+        [HALF_OPENED]: () => incrementSuccessCounter()
+    }
+    const success = () =>
+        handleSuccessForState[state.type]()
+
+
+    const handleErrorForState = {
+        [CLOSED]: () => incrementFailureCounter(),
+        [OPENED]: () => null,
+        [HALF_OPENED]: () => state.isOperationFailed = true
+    }
+    const error = () =>
+        handleErrorForState[state.type]()
+
+
+    const transitionWhenConditionIsReached = {
+        [CLOSED]: () => isFailureThresholdReached() && opened(),
+        [OPENED]: () => isTimeoutTimerExpired() && halfOpened(),
+        [HALF_OPENED]: () => isOperationFailed() ?
+            opened() : closed()
+    }
+
+    const transition = () => {
+        transitionWhenConditionIsReached[state.type]()
+        return isShortcircuit()
+    }
+    const isShortcircuit = () =>
+        state.type === OPENED ?
+        new Error('too many requests') :
+        null
+
+    return {
+        success,
+        error,
+        transition
+    }
+}
+
+async function task(i) {
+    if (i < 10 ||
+        i > 30 && i < 40 ||
+        i > 40 && i < 50) {
+        throw new Error('bad request')
+    }
+
+    return true
+}
+
+async function delay(duration = 1 * time.Second) {
+    return new Promise((resolve, reject) =>
+        setTimeout(() => resolve(true), duration)
+    )
+}
+
+async function main() {
+    const cb = new CircuitBreaker()
+    console.log('start', cb.state)
+    let i = 0
+    let start = Date.now()
+    while (Date.now() - start < 10 * time.Second) {
+        i++
+        await delay(1 * time.Millisecond)
+        const err = cb.transition()
+        if (err) {
+            console.log(err.message)
+            continue
+        }
+        try {
+            const res = await task(i)
+            cb.success()
+            console.log('success:', res)
+        } catch (error) {
+            cb.error()
+            console.log('error:', error.message)
+        }
+    }
+}
+
+main().catch(console.error)
+```
