@@ -612,6 +612,8 @@ main().catch(console.error)
 
 ## Alternative implementation
 
+This implementation does not wrap the function that needs to be executed.
+
 ```js
 const time = {
     Millisecond: 100,
@@ -626,14 +628,18 @@ const OPENED = 'opened'
 const HALF_OPENED = 'half-opened'
 
 
-function CircuitBreaker() {
+function CircuitBreaker({
+    successThreshold = 5,
+    failureThreshold = 5,
+    timeout = 5 * time.Second
+} = {}) {
     const state = Object.seal({
         successCounter: 0,
         failureCounter: 0,
-        successThreshold: 5,
-        failureThreshold: 5,
+        successThreshold,
+        failureThreshold,
         timer: null,
-        timeout: 1 * time.Second,
+        timeout,
         type: CLOSED,
         isOperationFailed: false
     })
@@ -652,7 +658,7 @@ function CircuitBreaker() {
         state.type = OPENED
         state.isOperationFailed = false
         startTimeoutTimer()
-
+        return new Error('too many requests')
     }
 
     const closed = () => {
@@ -670,17 +676,12 @@ function CircuitBreaker() {
         [OPENED]: () => null,
         [HALF_OPENED]: () => incrementSuccessCounter()
     }
-    const success = () =>
-        handleSuccessForState[state.type]()
-
 
     const handleErrorForState = {
         [CLOSED]: () => incrementFailureCounter(),
         [OPENED]: () => null,
         [HALF_OPENED]: () => state.isOperationFailed = true
     }
-    const error = () =>
-        handleErrorForState[state.type]()
 
 
     const transitionWhenConditionIsReached = {
@@ -690,19 +691,12 @@ function CircuitBreaker() {
             opened() : closed()
     }
 
-    const transition = () => {
-        transitionWhenConditionIsReached[state.type]()
-        return isShortcircuit()
-    }
-    const isShortcircuit = () =>
-        state.type === OPENED ?
-        new Error('too many requests') :
-        null
+
 
     return {
-        success,
-        error,
-        transition
+        success: () => handleSuccessForState[state.type](),
+        error: () => handleErrorForState[state.type](),
+        transition: () => transitionWhenConditionIsReached[state.type]()
     }
 }
 
@@ -723,7 +717,9 @@ async function delay(duration = 1 * time.Second) {
 }
 
 async function main() {
-    const cb = new CircuitBreaker()
+    const cb = new CircuitBreaker({
+        timeout: 1 * time.Second
+    })
     console.log('start', cb.state)
     let i = 0
     let start = Date.now()
