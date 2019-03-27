@@ -1,3 +1,8 @@
+# Implementation
+
+- See older version written in [typescript](https://github.com/alextanhongpin/circuit-retry)
+- alternative with [backoff](https://github.com/alextanhongpin/js-learn/blob/master/backoff.md)
+
 # With State Design Pattern
 
 ```js
