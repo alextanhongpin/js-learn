@@ -111,3 +111,73 @@ main().catch(console.error)
 
 // Flattening try cat
 ```
+
+## Another implementation
+
+```js
+// PSEUDO CODE
+// retries = 0
+// DO
+// 	wait (2^retries * 100 milliseconds)
+//  status = do_request() or get_async_result()
+// 	IF status = SUCCESS
+//		retry = false
+//  ELSE
+//    	retry = true
+// 		retries = retries + 1
+// WHILE (retry AND (retries < MAX_RETRIES))
+const time = {
+    Millisecond: 1,
+    Second: 1000,
+    Minute: 1000 * 60,
+    Hour: 1000 * 60 * 60,
+    Day: 1000 * 60 * 60 * 24
+}
+
+const jitter = t => Math.round(t / 2 + Math.random() * t)
+let BACKOFFS = [0, 1000, 4000, 9000, 16000, 25000, 36000, 49000, 64000, 81000]
+
+const sleep = async (duration = 1 * time.Second) =>
+    new Promise((resolve) => setTimeout(resolve, duration))
+
+const Retry = async (fn, {
+    maxRetry = 3,
+    onError // Error hook
+} = {}) => {
+    let retry = 0
+    while (retry < maxRetry) {
+        await sleep(jitter(BACKOFFS[Math.min(retry, BACKOFFS.length)]))
+        try {
+            return await fn()
+        } catch (error) {
+            retry++
+            onError && onError({
+                error,
+                retry
+            })
+        }
+    }
+
+    // TODO: Look into how to wrap errors.
+    throw new Error(`RetryError: exiting after ${retry} retries`)
+}
+
+async function main() {
+    try {
+        const result = await Retry(function() {
+            throw new Error('bad request')
+        }, {
+            maxRetry: 3,
+            onError: ({
+                retry,
+                error
+            }) => console.log(`error=${error.message} retry=${retry}`)
+        })
+        console.log(result)
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+main().catch(console.error)
+```
