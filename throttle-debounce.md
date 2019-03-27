@@ -181,3 +181,72 @@ async function greet(msg) {
     setTimeout(() => throttle(greet, 'throttle'), 100)
   })().catch(console.error)
 ```
+
+
+## Mutex and Debounce
+
+```js
+const Mutex = () => {
+    let isLocked = false
+    return async (fn) => {
+        if (isLocked) {
+            // Debug: uncomment to debug
+            console.log('locked')
+            return
+        }
+        try {
+            isLocked = true
+            return await fn()
+        } catch (error) {
+            throw error
+        } finally {
+            isLocked = false
+        }
+    }
+}
+
+const Debounce = (duration = 1000) => {
+    let timeout = null
+    return (fn) => {
+        // Debug: uncomment to debug
+        console.log('debouncing')
+        timeout && clearTimeout(timeout)
+        timeout = setTimeout(fn, duration)
+    }
+}
+
+const time = {
+    Millisecond: 1,
+    Second: 1000,
+    Minute: 1000 * 60,
+    Hour: 1000 * 60 * 60,
+    Day: 1000 * 1000 * 60 * 24
+}
+
+const sleep = (duration = 1 * time.Second) =>
+    new Promise((resolve) => setTimeout(resolve, duration))
+
+async function main() {
+    const asyncTask = async (namespace = 'task:') => {
+        // throw new Error('bad request')
+        await sleep()
+        console.log(namespace, ': do something')
+    }
+
+    const mutex = Mutex()
+    for (let i = 0; i < 10; i += 1) {
+        mutex(() => asyncTask('mutex'))
+        // E.g. Ensure an action is only performed once, and the next one can only be performed when the previous complete.
+        // mutex(() => submitForm())
+    }
+
+    const debounce = Debounce()
+    for (let i = 0; i < 10; i += 1) {
+        debounce(() => asyncTask('debounce'))
+        // Use to limit requests to api calls/state changes, e.g. when performing search/real-time validation.
+        // debounce(() => setState({ keyword: evt.currentTarget.value }))
+    }
+}
+
+main().catch()
+```
