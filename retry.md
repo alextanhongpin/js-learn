@@ -181,3 +181,56 @@ async function main() {
 
 main().catch(console.error)
 ```
+
+
+## Clean Retry
+
+```js
+class BackoffPolicy {
+  milliseconds = Object.freeze([0, 250, 500, 1000, 2500, 5000, 10000, 15000])
+  duration(n) {
+    if (n > this.milliseconds.length) {
+      n = this.milliseconds.length - 1
+    }
+    console.log(this.milliseconds)
+    return jitter(this.milliseconds[n])
+  }
+}
+
+function jitter(duration) {
+  return duration / 2 + (Math.random() * duration)
+}
+
+async function delay(duration) {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(duration), duration)
+  })
+}
+
+async function doWork() {
+  throw new Error('bad request')
+}
+
+function createBackoff() {
+  return Object.freeze(new BackoffPolicy())
+}
+
+async function main() {
+  const defaultBackoff = createBackoff()
+  // This will throw error.
+  // defaultBackoff.milliseconds.push(1)
+  for (let i = 0; i < 3; i += 1) {
+    const sleep = await delay(defaultBackoff.duration(i))
+    console.log(`sleep for ${sleep} milliseconds`)
+    try {
+      await doWork()
+      break
+    } catch (err) {
+      console.log('error:', err.message)
+      continue
+    }
+  }
+}
+
+main().catch(console.error)
+```
