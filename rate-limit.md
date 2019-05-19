@@ -83,61 +83,95 @@ console.log(counter)
 Example with Sliding window algorithm. Note, this is simplified as it only handles per second measurement, per minute etc might behave differently. Also, this implementation does not keep track on the user's identity. Rate limiter cannot be chained/composed, since for greater range, the requests per second will always be lower than the rate limiter with the lower range.
 
 ```js
+const required = (key, value) => {
+  if (value === null || value === undefined) {
+    throw new Error(`"${key}" is required`)
+  }
+}
+
+const time = Object.freeze({
+  Millisecond: 1,
+  Second: 1000,
+  Minute: 1000 * 60,
+  Hour: 1000 * 60 * 60,
+  Day: 1000 * 60 * 60 * 24
+})
+
 class RateLimiter {
   buckets = {}
-  constructor(requestsPerSecond = 1) {
-    this.requestsPerSecond = requestsPerSecond
+  constructor({
+    threshold,
+    durationInMs
+  } = {}) {
+    required('threshold', threshold)
+    required('durationInMs', durationInMs)
+    this.requestsPerSecond = threshold / (durationInMs / time.Second)
+    this.interval = setInterval(() => {
+      console.log('starting rate limiter')
+      this.clear()
+    }, 2 * durationInMs)
   }
-  _increment(key) {
-    if (!this.buckets[key]) this.buckets[key] = 0
-    this.buckets[key]++
+
+  stop() {
+    console.log('stopping rate limiter')
+    clearInterval(this.interval)
+  }
+
+  _incrementBucket(key) {
+    if (!this.buckets[key]) {
+      this.buckets[key] = 0
+    }
+    this.buckets[key] += 1
   }
   _getOrDefault(key) {
     return this.buckets[key] || 0
   }
+
   allow() {
     const now = Date.now()
-    // From the previous time window.
-    const elapsed = 1 - ((now % 1000) / 1000)
-    // Take only the seconds
-    const curr = Math.round(now / 1000)
-    // The previous time window difference by 1 second.
-    const prev = curr - 1
-    // TODO: Clear previous ones.
-    for (const key in this.buckets) {
-      if (Number(key) < prev) {
-        delete this.buckets[key]
+    const elapsed = now % time.Second
+    const curr = now - (elapsed)
+    const prev = curr - time.Second
+    for (const timeWindow in this.buckets) {
+      if (parseInt(timeWindow, 10) < prev) {
+        // delete this.buckets[timeWindow]
+        const {
+          [timeWindow]: _, ...rest
+        } = this.buckets
+        this.buckets = rest
       }
     }
-    this._increment(curr)
-    return (this._getOrDefault(prev) * elapsed + this._getOrDefault(curr)) < this.requestsPerSecond
+    const limit = (this._getOrDefault(prev) * (1 - (elapsed / time.Second))) + this._getOrDefault(curr)
+    // Don't include the current request in the limit.
+    this._incrementBucket(curr)
+    return limit < this.requestsPerSecond
+  }
+  clear() {
+    const curr = now - (now % time.Second)
+    const prev = curr - time.Second
+    for (const timeWindow in this.buckets) {
+      if (parseInt(timeWindow, 10) < prev) {
+        const {
+          [timeWindow]: _, ...rest
+        } = this.buckets
+        this.buckets = rest
+      }
+    }
   }
 }
 
-const rl = new RateLimiter(2)
-console.log(
-  rl.allow(),
-  rl.allow(),
-  rl
-)
-setTimeout(() => {
-  console.log(
-    rl,
-    rl.allow(),
-    rl,
-    rl.allow(),
-    rl
-  )
+const rateLimiter = new RateLimiter({
+  threshold: 1,
+  durationInMs: 10 * time.Second
+})
 
-  setTimeout(() => {
-    console.log(
-      rl,
-      rl.allow(),
-      rl,
-      rl.allow(),
-      rl
-    )
-  }, 1500)
+setInterval(() => {
+  if (Math.random() < 0.5) {
+    console.log(rateLimiter.allow(), rateLimiter)
+  } else {
+    console.log(rateLimiter)
+  }
+}, 1000)
 
-}, 1500)
+rateLimiter.stop()
 ```
