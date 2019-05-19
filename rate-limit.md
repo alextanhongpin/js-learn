@@ -5,6 +5,12 @@ The first code is a `Counter` (or Throttle?) to keep track of the user's request
 
 Counter can be chained (first check per year quota, then per month, then per day etc).
 ```js
+const required = (key, value) => {
+  if (value === null || value === undefined) {
+    throw new Error(`"${key}" is required`)
+  }
+}
+
 const time = Object.freeze({
   Millisecond: 1,
   Second: 1000,
@@ -13,69 +19,56 @@ const time = Object.freeze({
   Day: 1000 * 60 * 60 * 24
 })
 
-const range = Object.freeze({
-  Hourly: 'HOURLY',
-  Daily: 'DAILY',
-  Weekly: 'WEEKLY',
-  Monthly: 'MONTHLY'
-})
 
-class Counter {
+class Throttle {
   buckets = {}
-  constructor(threshold = 10000, range) {
+  constructor({
+    threshold,
+    durationInMs
+  }) {
+    required('threshold', threshold)
+    required('durationInMs', durationInMs)
     this.threshold = threshold
-    this.range = range
+    this.durationInMs = durationInMs
   }
-  getOrSetBucket(key) {
-    if (!this.buckets[key]) {
-      this.buckets[key] = 0
-    }
-    this.buckets[key]++
+  _getOrDefault(key) {
+    return this.buckets[key] || 0
   }
-  increment() {
-    this.getOrSetBucket(this.getKey())
+  _increment(key) {
+    const value = this.buckets[key] || 0
+    // Apply a threshold multiplier so that the counter does not exceed the limit.
+    if (value >= this.threshold * 10) return
+    this.buckets[key] = value + 1
   }
   allow() {
-    // Loop all the previous buckets and delete them.
-    for (const key of this.buckets) {
-      if (parseInt(key, 10) < this.getKey()) {
-        delete(this.buckets, key)
+    const now = Date.now()
+    const curr = now - (now % this.durationInMs)
+    const prev = curr - this.durationInMs
+    for (let timeWindow in this.buckets) {
+      if (parseInt(timeWindow, 10) <= prev) {
+        const {
+          [timeWindow]: _, ...rest
+        } = this.buckets
+        this.buckets = rest
       }
     }
-    if (!Object.keys(this.buckets).length) {
-      return true
-    }
-    return this.buckets[this.getKey()] < this.threshold
-  }
-  getKey() {
-    const now = new Date()
-    const [year, month, date, day, hour, minute] = [now.getFullYear(), now.getMonth(), now.getDate(), new Date().getDay(), now.getHours(), now.getMinutes()]
-    switch (this.range) {
-      case range.Hourly:
-        return new Date(year, month, date, hour).getTime()
-      case range.Daily:
-        return new Date(year, month, date).getTime()
-      case range.Weekly:
-        // NOTE: Get the first day of the week as the key.
-        return new Date(year, month, date - day).getTime()
-      case range.Monthly:
-        // NOTE: Need to find the start and the end of the month. 
-        // Get the first date of the month as the key.
-        return new Date(year, month, 1).getTime()
-    }
+    const count = this._getOrDefault(curr)
+    this._increment(curr)
+    return count < this.threshold
   }
 }
-
-const counter = new Counter(3, range.Daily)
-console.log(counter.allow())
-counter.increment()
-console.log(counter.allow())
-counter.increment()
-counter.increment()
-counter.increment()
-counter.increment()
-console.log(counter.allow())
-console.log(counter)
+const throttle = new Throttle({
+  threshold: 1,
+  durationInMs: 1 * time.Second
+})
+console.log(throttle.allow(), throttle)
+console.log(throttle.allow(), throttle)
+for (const i = 0; i < 10000; i += 1) {
+  throttle.allow()
+}
+setTimeout(() => {
+  console.log(throttle.allow(), throttle)
+}, 1100)
 ```
 
 ## Rate limiter 
