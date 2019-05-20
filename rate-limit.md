@@ -57,18 +57,44 @@ class Throttle {
     return count < this.threshold
   }
 }
-const throttle = new Throttle({
-  threshold: 1,
-  durationInMs: 1 * time.Second
-})
-console.log(throttle.allow(), throttle)
-console.log(throttle.allow(), throttle)
-for (const i = 0; i < 10000; i += 1) {
-  throttle.allow()
+```
+
+Multiple throttle can be combined, and managed by a `ThrottleManager`. 
+```js
+class ThrottleManager {
+  constructor(...throttles) {
+    this.throttles = throttles
+  }
+  allow() {
+    return this.throttles.map((fn) => fn.allow()).every(Boolean)
+  }
 }
+const throttleManager = new ThrottleManager(
+  // Rate of 1 request per second.
+  new Throttle({
+    threshold: 1,
+    durationInMs: 1 * time.Second
+  }), 
+  // Limited to only 5 requests per day.
+  new Throttle({
+    threshold: 5,
+    durationInMs: 1 * time.Day
+  })
+)
+console.log(throttleManager.allow())
+console.log(throttleManager.allow())
+console.log(throttleManager.allow())
 setTimeout(() => {
-  console.log(throttle.allow(), throttle)
-}, 1100)
+  console.log(throttleManager.allow())
+  console.log(throttleManager.allow())
+  console.log(throttleManager.allow())
+  console.log(throttleManager.allow())
+  console.log(throttleManager.allow())
+  console.log(throttleManager.allow())
+  setTimeout(() => {
+    console.log(throttleManager.allow(), throttleManager)
+  }, 2000)
+}, 2000)
 ```
 
 ## Rate limiter 
