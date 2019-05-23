@@ -72,3 +72,33 @@ async function main() {
   }
 }
 ```
+
+
+## Handling errors separately for each async function
+
+```js
+// Returns a given value if exists, or the value of the duration itself, after the given duration.
+async function delay(duration = 1000, value = duration) {
+  return new Promise(resolve => setTimeout(() => resolve(value), duration))
+}
+
+async function doWork(duration) {
+  await delay(duration)
+  throw new Error('bad request')
+}
+
+async function main() {
+  try {
+    await doWork()
+  } catch (err) {
+    console.log('error:', err.message)
+  }
+  try {
+    await doWork()
+  } catch (err) {
+    console.log('error:', err.message)
+  }
+}
+
+main().catch(console.error)
+```
