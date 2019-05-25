@@ -71,11 +71,10 @@ const ipToCountry = {
 
 async function entityToFacts(entity) {
   const country = ipToCountry[entity.ip] || ''
-  const lastLocations = ['area52']
   return {
     country,
-    hasPurchasedFlightTicket: false, // From db.
-    isNewLocation: !lastLocations.includes(country) // From db.
+    flightTickets: [], // From db.
+    lastLocations: ['area52'] // From db.
   }
 }
 
@@ -88,9 +87,35 @@ function validateFacts(facts) {
   }
 }
 
-function hasLoggedInFromDifferentLocation(entity, facts) {
-  if (facts.isNewLocation && !facts.hasPurchasedFlightTicket) {
-    throw new Error('suspicious login')
+function hasPurchasedFlightTicket(entity, facts) {
+  return {
+    value: facts.flightTickets.length > 0,
+    rule: 'has flight tickets',
+    reason: `flight_ticket count is ${facts.flightTickets.length}`
+  }
+}
+
+function hasVisitedLocation(entity, facts) {
+  return {
+    value: facts.lastLocations.includes(facts.country),
+    rule: 'has visited location',
+    reason: `${facts.lastLocations.join(',')} does not include ${facts.country}`
+  }
+}
+
+function all(name, ...conditions) {
+  for (const cond of conditions) {
+    if (!cond.value) {
+      throw new Error(`${name} rule: ${cond.rule}: ${cond.reason}`)
+      break
+    }
+  }
+}
+
+function not(condition) {
+  return {
+    ...condition,
+    value: !condition.value
   }
 }
 
@@ -98,12 +123,11 @@ async function ruleParser(entity) {
   // Convert an entity to facts first. In this case, we have person as an entity,
   // and we want to get the facts about the legal age based on the country he is in.
   const facts = await entityToFacts(entity)
-  console.log(facts)
-
   // Facts cannot be fiction.
   validateFacts(facts)
-  hasLoggedInFromDifferentLocation(entity, facts)
+  all('is suspicious login', not(hasPurchasedFlightTicket(entity, facts)), not(hasVisitedLocation(entity, facts)))
+  return entity
 }
-
-ruleParser(new Person('john', '0.0.0.0')).then(console.log).catch(console.error)
+ruleParser(new Person('john', '0.0.0.0')).then((entity) => console.log(entity)).catch(console.error)
+ruleParser(new Person('john', '0.0.0.1')).then(console.log).catch(console.error)
 ```
