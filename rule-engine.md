@@ -125,7 +125,7 @@ async function ruleParser(entity) {
   const facts = await entityToFacts(entity)
   // Facts cannot be fiction.
   validateFacts(facts)
-  all('is suspicious login', not(hasPurchasedFlightTicket(entity, facts)), not(hasVisitedLocation(entity, facts)))
+  all('is suspicious login', not(hasPurchasedFlightTicket(entity, facts)), hasVisitedLocation(entity, facts))
   return entity
 }
 ruleParser(new Person('john', '0.0.0.0')).then((entity) => console.log(entity)).catch(console.error)
