@@ -95,3 +95,46 @@ async function ruleParser(entity) {
 ruleParser(new Person('john', '0.0.0.0')).then((entity) => console.log(entity)).catch(console.error)
 ruleParser(new Person('john', '0.0.0.1')).then(console.log).catch(console.error)
 ```
+
+## Serializable rules
+https://www.npmjs.com/package/json-rules-engine
+```js
+function rule(value, operator, fact) {
+  switch (operator) {
+    case 'eq':
+      return value === fact
+    case 'neq':
+      return value !== fact
+    case 'gt':
+      return value > fact
+    case 'gte':
+      return value >= fact
+    case 'lt':
+      return value < fact
+    case 'lte':
+      return value <= fact
+    default:
+      throw new Error('unknown rule')
+  }
+}
+
+// The rule can be loaded from db. The value can be obtained during runtime
+
+const rules = [{
+  name: 'age must be greater than min age',
+  operator: 'gte',
+  fact: 15,
+  value: function(person) {
+    return person.age
+  }
+}]
+
+const person = {
+  age: 5
+}
+for (const r of rules) {
+  if (!rule(r.value(person), r.operator, r.fact)) {
+    throw new Error(`${r.name}: age is ${r.value(person)}`)
+  }
+}
+```
