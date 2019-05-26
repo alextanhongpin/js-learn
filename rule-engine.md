@@ -71,6 +71,9 @@ const ipToCountry = {
 
 async function entityToFacts(entity) {
   const country = ipToCountry[entity.ip] || ''
+  if (!country.trim().length) {
+    throw new Error('invalid country')
+  }
   return {
     country,
     flightTickets: [], // From db.
@@ -78,56 +81,17 @@ async function entityToFacts(entity) {
   }
 }
 
-function validateFacts(facts) {
-  const {
-    country
-  } = facts
-  if (!country.trim().length) {
-    throw new Error('invalid country')
-  }
-}
-
-function hasPurchasedFlightTicket(entity, facts) {
-  return {
-    value: facts.flightTickets.length > 0,
-    rule: 'has flight tickets',
-    reason: `flight_ticket count is ${facts.flightTickets.length}`
-  }
-}
-
-function hasVisitedLocation(entity, facts) {
-  return {
-    value: facts.lastLocations.includes(facts.country),
-    rule: 'has visited location',
-    reason: `${facts.lastLocations.join(',')} does not include ${facts.country}`
-  }
-}
-
-function all(name, ...conditions) {
-  for (const cond of conditions) {
-    if (!cond.value) {
-      throw new Error(`${name} rule: ${cond.rule}: ${cond.reason}`)
-      break
-    }
-  }
-}
-
-function not(condition) {
-  return {
-    ...condition,
-    value: !condition.value
-  }
-}
-
 async function ruleParser(entity) {
   // Convert an entity to facts first. In this case, we have person as an entity,
   // and we want to get the facts about the legal age based on the country he is in.
   const facts = await entityToFacts(entity)
-  // Facts cannot be fiction.
-  validateFacts(facts)
-  all('is suspicious login', not(hasPurchasedFlightTicket(entity, facts)), hasVisitedLocation(entity, facts))
+  const hasFlightTickets = facts.flightTickets.length > 0
+  const hasVisitedLocation = facts.lastLocations.includes(facts.country)
+  const isSuspiciousLogin = !hasFlightTickets && !hasVisitedLocation
+  if (isSuspiciousLogin) throw new Error('suspicious login ' + entity.ip)
   return entity
 }
+
 ruleParser(new Person('john', '0.0.0.0')).then((entity) => console.log(entity)).catch(console.error)
 ruleParser(new Person('john', '0.0.0.1')).then(console.log).catch(console.error)
 ```
