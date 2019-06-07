@@ -33,14 +33,24 @@ const EARTH_RADIUS_IN_METER = 6371e3
 
 class Position {
   constructor(lat, lon) {
+    if (!(lat instanceof Latitude)) {
+      throw new Error('type must be latitude')
+    }
+    if (!(lon instanceof Longitude)) {
+      throw new Error('type must be longitude')
+    }
     this.lat = lat
     this.lon = lon
   }
   // Distance returned is in meter.
-  distance({
-    lat,
-    lon
-  }) {
+  distance(position) {
+    if (!(position instanceof Position)) {
+      throw new Error('type must be position')
+    }
+    const {
+      lat,
+      lon
+    } = position
     const [lat1, lon1, lat2, lon2] = [this.lat, this.lon, lat, lon].map(p => p.toRadians())
     const deltaLat = lat2 - lat1
     const deltaLon = lon2 - lon1
