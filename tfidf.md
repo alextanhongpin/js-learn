@@ -1,3 +1,5 @@
+## Version 1
+
 Calculating tf-idf.
 
 ```js
@@ -81,4 +83,77 @@ console.log(euclidean(
   Object.values(results[2]),
   Object.values(results[3])
 ))
+```
+
+
+## Version 2
+
+With static methods.
+
+```js
+class Counter {
+  static count(words) {
+    const result = {}
+    for (const word of words) {
+      if (!result[word]) result[word] = 0
+      result[word] += 1
+    }
+    return result
+  }
+}
+
+class TFIdf {
+  static tf(words) {
+    const counter = Counter.count(words)
+    for (const key in counter) {
+      counter[key] = counter[key] / words.length
+    }
+    return counter
+  }
+  static unique(arr) {
+    return [...new Set(arr)]
+  }
+  static idf(documents) {
+    const uniqueOccurances = documents.flatMap(words => TFIdf.unique(words))
+    const result = Counter.count(uniqueOccurances)
+    for (const key in result) {
+      result[key] = Math.log10(documents.length / result[key])
+    }
+    return result
+  }
+  static tfidf(documents) {
+    const tfs = documents.map(words => TFIdf.tf(words))
+    const idf = TFIdf.idf(documents)
+
+    return tfs.map(tf => {
+      for (const word in idf) {
+        // We can choose to skip this to reduce memory usage, since this is a sparse vector.
+        if (!tf[word]) tf[word] = 0
+        tf[word] *= idf[word]
+      }
+      return tf
+    })
+  }
+  static distance(v, w) {
+    const words = [...new Set(Object.keys(v).concat(Object.keys(w)))]
+    let sum = 0
+    for (const word of words) {
+      sum += Math.pow((v[word] || 0) - (w[word] || 0), 2)
+    }
+    return 1 / (1 + Math.sqrt(sum))
+  }
+
+}
+const documents = [
+  'I have a cat',
+  'I have a dog',
+  'The movie is great',
+  'I think the cat is cute',
+  'The movie is perfect',
+  'The cat is cute'
+].map(str => str.split(' '))
+
+const result = TFIdf.tfidf(documents)
+console.log(TFIdf.distance(result[0], result[result.length - 2]))
+console.log(TFIdf.distance(result[0], result[1]))
 ```
