@@ -89,3 +89,36 @@ setTimeout(() => {
   console.log(counter)
 }, 2 * time.Second)
 ```
+
+
+## Python counter implementation
+
+```js
+class Counter {
+  constructor(data) {
+    this.result = {}
+    for (const item of data) {
+      if (!this.result[item]) this.result[item] = 0
+      this.result[item] += 1
+    }
+  }
+  most_common(n = 5) {
+      const values = Object.entries(this.result)
+      return values.sort(([k1, v1], [k2, v2]) => {
+        return v2 - v1
+      }).slice(0, Math.min(n, values.length))
+    }
+    *[Symbol.iterator]() {
+      const values = Object.entries(this.result)
+      for (const value of values) yield value
+    }
+}
+
+const counter = new Counter([1, 2, 2, 2, 1, 1, 2, 3, 3, 1])
+console.log(counter)
+console.log(counter.most_common(5))
+
+for (const item of counter) {
+  console.log('iterating', item)
+}
+```
