@@ -88,4 +88,23 @@ function jaroWinkler(source, target) {
 console.log(jaroWinkler('MARTHA', 'MARHTA')) // 0.9611111111111111
 console.log(jaroWinkler('DIXON', 'DICKSONX')) // 0.8133333333333332
 console.log(jaroWinkler('JELLYFISH', 'SMELLYFISH')) // 0.8962962962962964
+
+
+
+function computeLastOccuranceFunction(pattern, alphabets = 26) {
+  const alphas = Array(alphabets).fill(-1)
+  const a = 'a'.charCodeAt(0)
+  for (let i = 0; i < pattern.length; i += 1) {
+    const idx = pattern[i].charCodeAt(0) - a
+    alphas[idx] = i
+  }
+  return alphas
+}
+console.log(computeLastOccuranceFunction('hell'))
 ```
+
+## References
+
+- http://www-igm.univ-mlv.fr/~lecroq/string/node14.html
+- https://www.javatpoint.com/daa-boyer-moore-algorithm
+- https://www.javatpoint.com/daa-knuth-morris-pratt-algorithm
