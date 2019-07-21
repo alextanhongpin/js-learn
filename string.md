@@ -103,6 +103,24 @@ function computeLastOccuranceFunction(pattern, alphabets = 26) {
 console.log(computeLastOccuranceFunction('hell'))
 ```
 
+## Palindrome
+
+```js
+function isPalindrome(str) {
+  for (let i = 0, mid = str.length / 2; i < mid; i += 1) {
+    const start = str[i]
+    const end = str[str.length - 1 - i]
+    if (start !== end) {
+      return false
+    }
+  }
+  return true
+}
+
+isPalindrome('racecar')
+isPalindrome('iii')
+```
+
 ## References
 
 - http://www-igm.univ-mlv.fr/~lecroq/string/node14.html
