@@ -153,6 +153,9 @@ console.log(medianOfTwoSortedArray([1, 2, 3], [4, 5, 6]))
 }
 ```
 
+
+## Print matrix in spiral
+
 ```js
 const matrix = [
   [1, 2, 3, 4, 5],
@@ -160,4 +163,38 @@ const matrix = [
   [11, 12, 13, 14, 15],
   [16, 17, 18, 19, 20]
 ]
+
+function spiralMatrix(matrix) {
+  let topRow = 0
+  let bottomRow = matrix.length - 1
+  let leftRow = 0
+  let rightRow = matrix[0].length - 1
+
+  while (topRow < bottomRow && leftRow < rightRow) {
+    console.log('left to right')
+    for (let i = Math.max(0, leftRow - 1); i <= rightRow; i++) {
+      console.log(matrix[topRow][i])
+    }
+    topRow++
+
+    console.log('top to bottom')
+    for (let i = topRow - 1; i <= bottomRow; i++) {
+      console.log(matrix[i][rightRow])
+    }
+    rightRow--
+
+    console.log('right to left')
+    for (let i = rightRow + 1; i >= leftRow; i--) {
+      console.log(matrix[bottomRow][i])
+    }
+    bottomRow--
+
+    console.log('bottom to top')
+    for (let i = bottomRow + 1; i >= topRow; i--) {
+      console.log(matrix[i][leftRow])
+    }
+    leftRow++
+  }
+}
+spiralMatrix(matrix)
 ```
