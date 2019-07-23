@@ -121,6 +121,200 @@ isPalindrome('racecar')
 isPalindrome('iii')
 ```
 
+## Knuth-Morris-Pratt algorithm for Pattern Search.
+
+Given a text `txt[0..n-1]` and pattern `pat[0..m-1]`, write a function `search(char pat[], char text[])` that prints all occurences of `pat[]` in `txt[]`. You may assume that `n > m`.
+
+Time complexity (worst case): `O(n)`
+
+Basic idea behind KMP: Whenever we detect a mismatch (after some matches), we already know some of the characters in the text of the next window). We take advantage of this information to avoid matching the characters we know will anyway match.
+
+```js
+function longestPrefix(str) {
+  let prefix = new Array(str.length)
+  let maxPrefix = 0
+  prefix[0] = 0
+
+  for (let i = 1; i < str.length; i++) {
+    while (str.charAt(i) !== str.charAt(maxPrefix) && maxPrefix > 0) {
+      maxPrefix = prefix[maxPrefix - 1]
+    }
+    if (str.charAt(maxPrefix) === str.charAt(i)) {
+      maxPrefix++
+    }
+    prefix[i] = maxPrefix
+  }
+  return prefix
+}
+
+function KnuthMorrisPratt(str, pattern) {
+  let prefixTable = longestPrefix(pattern)
+  let patternIndex = 0
+  let strIndex = 0
+
+  while (strIndex < str.length) {
+    if (str.charAt(strIndex) !== pattern.charAt(patternIndex)) {
+      // Case 1: The characters are different.
+      if (patternIndex !== 0) {
+        // Use the prefix table if possible.
+        patternIndex = prefixTable[patternIndex - 1]
+      } else {
+        // Increment the str index to next character.
+        strIndex++
+      }
+    } else if (str.charAt(strIndex) === pattern.charAt(patternIndex)) {
+      // Case 2: The characters are the same.
+      strIndex++
+      patternIndex++
+    }
+
+    // Found the pattern.
+    if (patternIndex === pattern.length) {
+      return true
+    }
+  }
+  return false
+}
+
+KMP('sammiebae', 'bae')
+KMP('sammiebae', 'sammie')
+```
+
+
+## RobinKarp Search
+
+```js
+class RabinKarpSearch {
+  constructor() {
+    this.prime = 101
+  }
+
+  rabinkarpFingerprintHash(str, endLength = str.length) {
+    let hashInt = 0
+    for (let i = 0; i < endLength; i++) {
+      hashInt += str.charCodeAt(i) * Math.pow(this.prime, i)
+    }
+    return hashInt
+  }
+
+  recalculateHash(str, oldIndex, newIndex, oldHash, patternLength = str.length) {
+    let newHash = oldHash - str.charCodeAt(oldIndex)
+    newHash = Math.floor(newHash / this.prime)
+    newHash += str.charCodeAt(newIndex) * Math.pow(this.prime, patternLength - 1)
+    return newHash
+  }
+
+  strEquals(str1, startIndex1, endIndex1, str2, startIndex2, endIndex2) {
+    if (endIndex1 - startIndex1 !== endIndex2 - startIndex2) {
+      return false
+    }
+    while (startIndex1 <= endIndex1 && startIndex2 <= endIndex2) {
+      if (str1[startIndex1] !== str2[startIndex2]) {
+        return false
+      }
+      startIndex1++
+      startIndex2++
+    }
+    return true
+  }
+
+  rabinkarpSearch(str, pattern) {
+    let T = str.length
+    let W = pattern.length
+    let patternHash = this.rabinkarpFingerprintHash(pattern, W)
+    let textHash = this.rabinkarpFingerprintHash(str, W)
+
+    for (let i = 1; i <= T - W + 1; i++) {
+      if (patternHash === textHash & this.strEquals(str, i - 1, i + W - 2, pattern, 0, W - 1)) {
+        return i - 1
+      }
+      if (i < T - W + 1) {
+        textHash = this.recalculateHash(str, i - 1, i + W - 1, textHash, W)
+      }
+    }
+    return -1
+  }
+}
+
+const rks = new RabinKarpSearch()
+console.log(rks.rabinkarpFingerprintHash('sammie'))
+console.log(rks.rabinkarpFingerprintHash('zammie'))
+
+const oldHash = rks.rabinkarpFingerprintHash('sa')
+console.log('oldHash', oldHash)
+console.log('recalculatedHash', rks.recalculateHash('same', 0, 2, oldHash, 'sa'.length))
+
+
+console.log(rks.rabinkarpSearch('SammieBae', 'as'))
+console.log(rks.rabinkarpSearch('SammieBae', 'Bae'))
+console.log(rks.rabinkarpSearch('SammieBae', 'Sam'))
+```
+
+## KMP Search
+
+```js
+function computeLongestPrefixString(pattern) {
+  // The length of the longest prefix.
+  let len = 0
+  let lps = Array(pattern.length).fill(0)
+  let i = 1
+  while (i < pattern.length) {
+    if (pattern[i] === pattern[len]) {
+      lps[i] = ++len
+      i++
+    } else {
+      if (len !== 0) {
+        len = lps[len - 1]
+      } else {
+        lps[i] = 0
+        i++
+      }
+
+    }
+  }
+  return lps
+}
+
+function KMPSearch(text, pattern) {
+  const M = pattern.length
+  const N = text.length
+
+  const lps = Array(M).fill(0)
+
+  computeLongestPrefixString(pattern, M, lps)
+
+  let j = 0 // Index for pattern.
+  let i = 0 // Index for text.
+  while (i < N) {
+    if (pattern[j] === text[i]) {
+      i++
+      j++
+    }
+    if (j === M) {
+      console.log('found pattern at', i - j)
+      j = lps[j - 1]
+    } else if (i < N && pattern[j] !== text[i]) {
+      // Mismatch after j matches.
+      if (j !== 0) {
+        j = lps[j - 1]
+      } else {
+        i++
+      }
+    }
+  }
+}
+
+
+assert(computeLongestPrefixString('AAAA').toString() === [0, 1, 2, 3].toString())
+assert(computeLongestPrefixString('ABCDE').toString() === [0, 0, 0, 0, 0].toString())
+assert(computeLongestPrefixString('AABAACAABAA').toString() === [0, 1, 0, 1, 2, 0, 1, 2, 3, 4, 5].toString())
+assert(computeLongestPrefixString('AAACAAAAAC').toString() === [0, 1, 2, 0, 1, 2, 3, 3, 3, 4].toString())
+assert(computeLongestPrefixString('AAABAAA').toString() === [0, 1, 2, 0, 1, 2, 3].toString())
+
+const text = "ABABDABACDABABCABAB"
+const pattern = "ABABCABAB"
+console.log(KMPSearch(text, pattern))
+```
 ## References
 
 - http://www-igm.univ-mlv.fr/~lecroq/string/node14.html
