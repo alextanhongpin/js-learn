@@ -315,6 +315,18 @@ const text = "ABABDABACDABABCABAB"
 const pattern = "ABABCABAB"
 console.log(KMPSearch(text, pattern))
 ```
+
+## Replace with matching
+
+```js
+const str = 'this is a great message'
+
+console.log(str.replace('great', 'wonderful'))
+console.log(str.replace('great', '$&-$&')) // Match the target.
+console.log(str.replace('great', '$`')) // Match the pattern before the target.
+console.log(str.replace('great', "$'")) // Match the pattern after the target.
+```
+
 ## References
 
 - http://www-igm.univ-mlv.fr/~lecroq/string/node14.html
