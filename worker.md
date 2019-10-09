@@ -33,3 +33,14 @@ async function main() {
 
 main().catch(console.error)
 ```
+
+
+## Web Workers
+
+https://hackernoon.com/web-workers-in-react-redux-application-129274e84a4e
+https://auth0.com/blog/speedy-introduction-to-web-workers/
+
+https://bitsofco.de/web-workers-vs-service-workers-vs-worklets/
+https://developers.google.com/web/updates/2018/08/offscreen-canvas
+https://www.freecodecamp.org/news/how-web-workers-can-help-with-consistent-asynchronous-tasks-in-javascript-cd6d728fa4ee/
+
