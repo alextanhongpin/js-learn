@@ -198,3 +198,33 @@ function spiralMatrix(matrix) {
 }
 spiralMatrix(matrix)
 ```
+
+## Set columns and rows to zero if one of the cell is zero
+```
+const m = [
+    [0, 2, 3],
+    [1, 1, 3],
+    [2, 3, 2]
+]
+
+function setZeros(matrix) {
+    const rows = Array(matrix.length).fill(0)
+    const columns = Array(matrix[0].length).fill(0)
+    for (let i = 0; i < matrix.length; i += 1) {
+        for (let j = 0; j < matrix[i].length; j += 1) {
+            if (matrix[i][j] === 0) {
+                rows[i] = 1
+                columns[j] = 1
+            }
+        }
+    }
+    for (let i = 0; i < matrix.length; i += 1) {
+        for (let j = 0; j < matrix[i].length; j += 1) {
+            if (columns[j] || rows[i]) matrix[i][j] = 0
+        }
+    }
+    return matrix
+}
+
+console.log(setZeros(m))
+```
