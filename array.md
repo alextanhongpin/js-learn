@@ -14,6 +14,21 @@ const batch = (arr = [], bucket = 10) => {
 }
 ```
 
+Better, using generator:
+
+```js
+function* batch(arr, n = 10) {
+  let copy = [...arr]
+  while (copy.length) {
+    yield copy.splice(0, n)
+  }
+}
+
+for (let b of batch([1, 2, 3, 4, 5, 6, 7, 8], 3)) {
+  console.log(b)
+}
+```
+
 ## Check nested
 
 ```js
