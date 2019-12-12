@@ -137,3 +137,59 @@ for (const result of filterGenerator(composedFilter)(data, first)) {
     console.log('result', result)
 }
 ```
+
+# Batch
+
+```js
+function* batch(arr, n = 10) {
+  let copy = [...arr]
+  while (copy.length) {
+    yield copy.splice(0, n)
+  }
+}
+
+for (let b of batch([1, 2, 3, 4, 5, 6, 7, 8], 3)) {
+  console.log(b)
+}
+```
+
+
+# Generator for infinite pagination
+
+```js
+async function fetchPosts({
+  page = 1,
+  perPage = 10
+} = {}) {
+  return {
+    result: [page],
+    hasNextPage: page < 3
+  }
+}
+
+async function* loadPages(page = 1, perPage = 10) {
+  while (true) {
+    console.log('fetching page', page)
+    const {
+      result,
+      hasNextPage
+    } = await fetchPosts({
+      page,
+      perPage
+    })
+    yield result
+    page++
+    if (!hasNextPage) break
+  }
+}
+
+async function main() {
+  const page = loadPages()
+  console.log(await page.next())
+  console.log(await page.next())
+  console.log(await page.next())
+  console.log(await page.next())
+}
+
+main().catch(console.error)
+```
