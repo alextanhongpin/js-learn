@@ -63,3 +63,40 @@ describe('story: timezone is killing me', () => {
   })
 })
 ```
+
+
+## Angle between hour and minute hand
+
+```js
+// Calculate the degree between hours and seconds, say 3:27.
+const HOUR_HAND = 0.5
+const MINUTE_HAND = 6
+
+function hourHandAngle(hours, minutes = 0) {
+  return ((hours % 12) * 60 + minutes % 60) * HOUR_HAND
+}
+
+function minuteHandAngle(minutes = 0) {
+  return minutes % 60 * MINUTE_HAND
+}
+
+function angleBetween(hours, minutes = 0) {
+  const angle = Math.abs(hourHandAngle(hours, minutes) - minuteHandAngle(minutes))
+  return Math.min(360 - angle, angle)
+}
+
+// angleBetween(9, 60) // 90
+// angleBetween(3, 30) // 75
+angleBetween(3, 27) // 58.5
+```
+
+## Hour and Minute Hand of a clock meeting
+
+When are the hour and minute hands of a clock superimposed?
+```js  
+// (H * 60 + M) * 0.5 = 6 * M
+// 60H + M = 12M
+// M = 60 / 11 H
+
+H is an integer in the range 0–11. This gives times of: 0:00, 1:05.45, 2:10.90, 3:16.36, 4:21.81, 5:27.27. 6:32.72, 7:38.18, 8:43.63, 9:49.09, 10:54.54, and 12:00. (0.45 minutes are exactly 27.27 seconds.)
+```
