@@ -1,6 +1,6 @@
 ## Promise.race
 
-Mimicking golang's context cancellation with promises.
+Mimicking golang's context cancellation with promises. We can also use this to set a timeout for a request so that it can be cancelled if it exceeded the timeout.
 
 ```js
 class TimeoutError extends Error {
