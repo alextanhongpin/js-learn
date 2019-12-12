@@ -327,6 +327,211 @@ console.log(str.replace('great', '$`')) // Match the pattern before the target.
 console.log(str.replace('great', "$'")) // Match the pattern after the target.
 ```
 
+## Remove duplicate characters in string string
+```js
+function removeDuplicate(str) {
+    if (str.length < 2) return str
+
+    const ascii = Array(256).fill(false)
+    let result = ''
+    for (let s of str) {
+        const code = s.charCodeAt(0)
+        if (ascii[code]) continue
+        ascii[code] = true
+        result += s
+    }
+    return result
+}
+
+function removeDuplicate2(str) {
+    if (str.length < 2) return str
+    const ascii = Array(256).fill(false)
+    const chars = Array(str.length).fill('')
+    ascii[str.charCodeAt(0)] = true
+    chars[0] = str[0]
+    let tail = 1
+    for (let i = 1; i < str.length; i += 1) {
+        const code = str.charCodeAt(i)
+        if (ascii[code]) continue
+        ascii[code] = true
+        chars[tail++] = str[i]
+    }
+    return chars.slice(0, tail).join('')
+}
+
+function assert(fn, given, expected) {
+    const actual = fn(given)
+    console.assert(expected === actual, `given '${given}' expected '${expected}', got '${actual}'`)
+}
+
+function testCases(fn) {
+    assert(fn, '', '')
+    assert(fn, 'a', 'a')
+    assert(fn, 'ab', 'ab')
+    assert(fn, 'aabbcc', 'abc')
+    assert(fn, 'xyzxyz', 'xyz')
+    assert(fn, 'hello world', 'helo wrd')
+}
+
+testCases(removeDuplicate)
+testCases(removeDuplicate2)
+```
+
+## Unique Characters
+
+```js
+function isUniqueChars(str) {
+    let checker = 0
+    for (let s of str) {
+        const code = s.charCodeAt(0) - 'a'.charCodeAt(0)
+        if ((checker & (1 << code)) > 0) return false
+        checker |= (1 << code)
+    }
+    return true
+}
+
+function isUniqueChars2(str) {
+    let chars = Array(256).fill(0)
+    for (let s of str) {
+        const code = s.charCodeAt(0)
+        if (chars[code]) return false
+        chars[code] = true
+    }
+    return true
+}
+
+function test(fn) {
+    assert(fn(''))
+    assert(fn('abcde'))
+    assert(fn('hel'))
+
+    assert(fn('hell') === false)
+    assert(fn('aa') === false)
+    assert(fn('abcabc') === false)
+}
+
+test(isUniqueChars)
+test(isUniqueChars2)
+```
+
+## Reverse string
+
+To reverse a string, iterate through the midpoint of the string and swap the first and last position of the string.
+```js
+function reverse(str) {
+    const mid = Math.floor(str.length / 2)
+    const chars = str.split('')
+    for (let i = 0, j = str.length - 1; i < mid; i++, j--) {
+        [chars[i], chars[j]] = [chars[j], chars[i]]
+    }
+    return chars.join('')
+}
+
+function test(fn, given, expected) {
+    const actual = fn(given)
+    console.assert(expected === actual, `given '${given}' expected '${expected}', got '${actual}'`)
+}
+
+test(reverse, '', '')
+test(reverse, 'a', 'a')
+test(reverse, 'ab', 'ba')
+test(reverse, 'abcde', 'edcba')
+test(reverse, 'abcdef', 'fedcba')
+test(reverse, '13a', 'a31')
+test(reverse, 'thunder', 'rednuht')
+test(reverse, 'thunder ', ' rednuht')
+```
+
+## Anagram
+
+```js
+function anagram(s, t) {
+    return s.split('').sort().join('') === t.split('').sort().join('')
+}
+
+function anagram2(s, t) {
+    // Validations.
+    if (!s.length) return true
+    if (s.length !== t.length) return false
+    let asciiChars = Array(256).fill(0)
+    let uniqueCharacters = 0
+    for (let i = 0; i < s.length; i += 1) {
+        const code = s.charCodeAt(i)
+        if (!asciiChars[code]) {
+            uniqueCharacters++
+        }
+        asciiChars[code]++
+    }
+    for (let j = 0; j < t.length; j += 1) {
+        const code = t.charCodeAt(j)
+        if (asciiChars[code] === 0) return false
+        asciiChars[code]--
+        if (asciiChars[code] === 0) {
+            uniqueCharacters--
+        }
+        if (uniqueCharacters === 0) return t.length - 1 === j
+    }
+    return false
+}
+
+
+function assert(fn, given, expected) {
+    const actual = fn(...given)
+    console.assert(expected === actual, `given '${given}' expected '${expected}', got '${actual}'`)
+}
+
+function testCases(fn) {
+    assert(fn, ['', ''], true)
+    assert(fn, ['ab', 'ba'], true)
+    assert(fn, ['ab', 'ab'], true)
+    assert(fn, ['silent', 'listen'], true)
+    assert(fn, ['race', 'care'], true)
+    assert(fn, ['elbow', 'below'], true)
+    assert(fn, ['stressed', 'desserts'], true)
+}
+
+testCases(anagram)
+testCases(anagram2)
+```
+
+## Replace function
+
+```js
+function replaceFun(str, limiter = '%20') {
+    let num = 0
+    for (let s of str) {
+        if (s === ' ') num++
+    }
+    let newLength = str.length + limiter.length * num
+    const chars = Array(newLength).fill('')
+    for (let i = str.length - 1; i >= 0; i--) {
+        if (str[i] === ' ') {
+            for (let j = limiter.length - 1; j >= 0; j--) {
+                chars[newLength--] = limiter[j]
+            }
+        } else {
+            chars[newLength--] = str[i]
+        }
+    }
+    return chars.join('')
+}
+
+function assert(fn, given, expected) {
+    const actual = fn(given)
+    console.assert(expected === actual, `given '${given}' expected '${expected}', got '${actual}'`)
+}
+
+function testCases(fn) {
+    assert(fn, '', '')
+    assert(fn, ' ', '%20')
+    assert(fn, 'hello world', 'hello%20world')
+    assert(fn, '1 2 3', '1%202%203')
+    assert(fn, '1  2', '1%20%202')
+}
+
+testCases(replaceFun)
+```
+
 ## References
 
 - http://www-igm.univ-mlv.fr/~lecroq/string/node14.html
