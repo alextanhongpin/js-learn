@@ -18,3 +18,10 @@ $ npm i -g npm-check-updated
 $ ncu -u
 $ npm i
 ```
+
+
+## Object-Oriented 
+
+
+Wrap domain model
+- wrap with empty, zero, value, map, find, where, view, parse,  validate, label, with, fulfill, sortable your, filterableby
