@@ -48,3 +48,22 @@ https://www.freecodecamp.org/news/how-web-workers-can-help-with-consistent-async
 ## queueMicrotask
 
 https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/queueMicrotask
+
+
+## Worker Threads
+
+```js
+const workers = require('worker_threads')
+
+if (workers.isMainThread) {
+  const worker = new workers.Worker(__filename, {
+    workerData: 41
+  })
+  worker.on('message', response => {
+    console.log('message received')
+    console.log(response)
+  })
+} else {
+  workers.parentPort.postMessage(workers.workerData + 1)
+}
+```
