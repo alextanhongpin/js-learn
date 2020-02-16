@@ -55,3 +55,18 @@ const people = [{
 const sorted = people.sort(orderMultiple(byAge, reverse(byName)))
 console.log(JSON.stringify(sorted))
 ```
+
+## Alphabetical sorting
+Good:
+```js
+const alphabeticalSorting = (left, right) =>
+  left.value < right.value ? -1 : left.value > right.value ? 1 : 0
+```js
+
+Better:
+```
+const alphabetically = (left, right) =>
+  left.value.localeCompare(right.value)
+```
+
+
