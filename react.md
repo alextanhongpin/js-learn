@@ -101,3 +101,24 @@ function View({ api }: any) {
 	// ...
 }
 ```
+
+## React copy to clipboard
+
+```js
+  const ref = useRef()
+
+  const handleCopy = () => {
+    if (!(ref && ref.current)) {
+      return
+    }
+    ref.current.select()
+    document.execCommand('copy')
+  }
+```
+
+## React render JSX string, good for iframe builder
+```js
+import ReactDOMServer from 'react-dom/server'
+
+<textarea ref={ref} value={ReactDOMServer.renderToStaticMarkup(renderIframe())} style={{ width: '100%' }}/>
+```
