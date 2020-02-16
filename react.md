@@ -122,3 +122,28 @@ import ReactDOMServer from 'react-dom/server'
 
 <textarea ref={ref} value={ReactDOMServer.renderToStaticMarkup(renderIframe())} style={{ width: '100%' }}/>
 ```
+
+## Sticky Scrolling
+
+```js
+  pageScroll = () => {
+    const HEADER_HEIGHT = 157
+    const { sticky } = this.state
+    const navbar = this.navbar && this.navbar.current
+    if (!navbar) return
+    const isSticky = window.scrollY >= HEADER_HEIGHT
+    if (isSticky !== sticky) {
+      this.setState(({ sticky }) => ({ sticky: !sticky }))
+    }
+  }
+
+  componentDidMount () {
+    this.scrollToComponent = require('react-scroll-to-component')
+    this.scrollListener = debounce(this.pageScroll)
+    window.addEventListener(
+      'scroll',
+      this.scrollListener,
+      500
+    )
+  }
+```
