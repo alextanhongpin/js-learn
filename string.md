@@ -532,6 +532,21 @@ function testCases(fn) {
 testCases(replaceFun)
 ```
 
+## Split by capitalized word
+
+```js
+const splitCapitalizeRegex = (str) =>
+  Array.from(str.match(/[A-Z][a-z]+/g))
+
+console.log(splitCapitalizeRegex('ThisIsTheStringToSplit'))
+
+// Alternative is to use string split.
+const splitCapitalize = (str) =>
+  str.split(/(?=[A-Z])/g)
+
+console.log(splitCapitalize('ThisIsGreat'))
+```
+
 ## References
 
 - http://www-igm.univ-mlv.fr/~lecroq/string/node14.html
