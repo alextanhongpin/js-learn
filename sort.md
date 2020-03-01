@@ -61,12 +61,31 @@ Good:
 ```js
 const alphabeticalSorting = (left, right) =>
   left.value < right.value ? -1 : left.value > right.value ? 1 : 0
-```js
+```
 
 Better:
-```
+
+```js
 const alphabetically = (left, right) =>
   left.value.localeCompare(right.value)
 ```
 
 
+## Sort by multiple conditions
+
+```js
+const data = [
+  {age: 10, year: 100},
+  {age: 10, year: 1000},
+  {age: 10, year: 5},
+  {age: 30, year: 10},
+  {age: 20, year: 50},
+  {age: 25, year: 50},
+  {age: 25, year: 20}
+]
+
+const sorted = data.sort((left ,right) =>
+    (left.age - right.age) || (left.year - right.year))
+
+JSON.stringify(sorted)
+```
