@@ -17,3 +17,61 @@ References:
 
 - https://medium.com/trabe/detecting-node-js-active-handles-with-wtfnode-704e91f2b120
 - https://github.com/davidmarkclements/overload-protection
+
+
+## Debugging active handles
+
+```js
+const http = require('http')
+const PORT = 8000
+
+const server = http.createServer(function onReq (req, res) {
+  setTimeout(function () {
+    res.end('hello world')
+  }, 10000)
+})
+
+server.listen(PORT, function onListen () {
+  console.log(`server listening on port ${PORT}`)
+})
+
+process.on('SIGUSR1', function onSignal () {
+  const activeHandles = process._getActiveHandles()
+  const activeHandlesByConstructor = {}
+
+  console.log('Number of active handles:', activeHandles.length)
+  activeHandles.forEach(function (activeHandle) {
+    if (activeHandlesByConstructor[activeHandle.constructor.name]) {
+      ++activeHandlesByConstructor[activeHandle.constructor.name]
+    } else {
+      activeHandlesByConstructor[activeHandle.constructor.name] = 1
+    }
+  })
+  console.log('Active handles:', activeHandlesByConstructor)
+})
+```
+
+Make a few requests:
+```bash
+$ curl localhost:8000
+```
+
+Find the process:
+
+```bash
+$ ps | grep node
+18992 ttys002    0:00.10 node index.js
+```
+
+Send a usr1 signal so that we can debug the server without restarting them:
+```bash
+$ kill -usr1 18992 
+```
+
+Output:
+```bash
+» node index.js
+server listening on port 8000
+Number of active handles: 3
+Active handles: { Server: 1, WriteStream: 2  }
+```
