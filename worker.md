@@ -67,3 +67,31 @@ if (workers.isMainThread) {
   workers.parentPort.postMessage(workers.workerData + 1)
 }
 ```
+
+## Single-threaded nodejs
+
+Nodejs is single-threaded, but some libraries in nodejs are not single-threaded.
+
+Libuv set ups a thread pool of four threads to perform OS-related operations by utilizing the power of all the CPU cores. Given our machines has four cores, each thread from the pool is assigned to every core. 
+
+The results is one thread per core. With this setup, all four thread will execute `logHashTime` in each core in parallel - all four functions take similar time.
+```js
+// Tweak the number of threads in the libuv
+// thread pool.
+process.env.UV_THREADPOOL_SIZE = 5
+const crypto = require('crypto')
+const start = Date.now()
+
+function logHashTime () {
+  crypto.pbkdf2('a', 'b', 100000, 512, 'sha512', () => {
+    console.log('Hash:', Date.now() - start)
+  })
+}
+
+// When running 5 functions on a computer with 4 cores, the fifth will take longer time to process, because all four cores will be occupied.
+logHashTime()
+logHashTime()
+logHashTime()
+logHashTime()
+logHashTime()
+```
