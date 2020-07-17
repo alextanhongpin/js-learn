@@ -138,3 +138,91 @@ for (const r of rules) {
   }
 }
 ```
+
+## Simple expression
+
+```js
+// The operators has to be evaluated in the right order, since we use naive matching,
+// so = can be mistaken as <= or >= or !=.
+const OPERATORS = ['>=', '<=', '>', '<', '!=', '=']
+
+const isField = (str) => str.startsWith('.')
+
+const parseValue = (val) => {
+    if (val.startsWith('"') && val.endsWith('"')) return val.replace(/"/g, '')
+    if (val === 'true') return true
+    if (val === 'false') return false
+    return Number(val)
+}
+const parseField = (str) => str.substring(1)
+
+// expression = '.name = "john"'
+function parseExpression(obj = {}, expression = '') {
+    expression = expression.trim()
+    for (let operator of OPERATORS) {
+        if (expression.includes(operator)) {
+            const [left, right] = expression.split(operator).map(str => str.trim())
+            if (!isField(left)) throw new Error('invalid left value: must be a field syntax, .e.g .name')
+            const field = parseField(left)
+            const value = parseValue(right)
+            if (value === '' || value === null || value === undefined) throw new Error('invalid right value')
+            return evaluate(obj[field], operator.trim(), value)
+        }
+    }
+    return null
+}
+
+function evaluate(left, operator, right) {
+    switch (operator) {
+        case '=':
+            return left === right
+        case '>':
+            return left > right
+        case '>=':
+            return left >= right
+        case '<':
+            return left < right
+        case '<=':
+            return left <= right
+        case '!=':
+            return left != right
+        default:
+            throw new Error('invalid operator: ' + operator)
+    }
+}
+
+function parser(obj, ...expressions) {
+    return expressions.map(expr => parseExpression(obj, expr))
+}
+
+
+const out = parser({
+    name: 'john',
+    age: 20
+}, '.name = "john"', '.name = "jane"', '.age > 20', '.age = 20', '.age != 20')
+console.log(out, out.every(Boolean), out.some(Boolean))
+
+const interpreter = (obj, str) => {
+    const expressions = str.split('\n').map(str => str.trim()).filter(Boolean)
+    console.log(expressions)
+    return parser(obj, ...expressions).every(Boolean)
+}
+const obj = {
+    name: "john",
+    age: 14
+}
+const expr = `
+  .name = "john"
+  .age > 13
+`
+console.log(interpreter(obj, expr))
+
+// Do sth like this:
+const expr2 = `
+allow {
+  .name = "name"
+  .age > 10
+}
+`
+// Which will return an object, { allow: true }
+```
