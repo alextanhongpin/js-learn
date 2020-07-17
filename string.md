@@ -547,6 +547,17 @@ const splitCapitalize = (str) =>
 console.log(splitCapitalize('ThisIsGreat'))
 ```
 
+## Convert pascal_case to camelCase
+
+```sql
+function pascalToCamelCase(text) {
+  return text.replace(/_[a-z]/g, function(s) { 
+    return s.slice(1).toUpperCase() 
+  })
+}
+pascalToCamelCase('hello_world_haha')
+```
+
 ## References
 
 - http://www-igm.univ-mlv.fr/~lecroq/string/node14.html
