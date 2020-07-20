@@ -547,15 +547,44 @@ const splitCapitalize = (str) =>
 console.log(splitCapitalize('ThisIsGreat'))
 ```
 
-## Convert pascal_case to camelCase
+## Types of case
+ camelCase; PascalCase; snake_case; kebab-case
+
+## Convert snake_case to camelCase
 
 ```sql
-function pascalToCamelCase(text) {
+function snakeToCamelCase(text) {
   return text.replace(/_[a-z]/g, function(s) { 
     return s.slice(1).toUpperCase() 
   })
 }
-pascalToCamelCase('hello_world_haha')
+snakeToCamelCase('hello_world_haha')
+```
+
+## Camel to Snake (pascal) case
+
+```js
+function camelToSnakeCase(text) {
+  return text.replace(/[A-Z]{1}/g, function(char) {
+    return `_${char.toLowerCase()}`
+  })
+}
+
+function isObject(obj) {
+  return obj === Object(obj)
+}
+
+
+function snakeCaseObject(o = {}) {
+  if (!Object.keys(o).length) return o
+  const result = {}
+  for (let key in o) {
+    const snakeKey = camelToSnakeCase(key)
+    const value = o[key]
+    result[snakeKey] = isObject(value) ? snakeCaseObject(value) : value
+  }
+  return result
+}
 ```
 
 ## References
