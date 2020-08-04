@@ -10,12 +10,8 @@ switch (caseType) {
 ```
 
 ```js
-function isCapital(str) {
-  return /^[A-Z]/.test(str)
-}
-
 function stringScore(str = '') {
-  const pascal = isCapital(str) ? 1 : 0
+  const pascal = str.match(/^[A-Z]/) || []
   const camel = str.match(/[a-z][A-Z]/g) || []
   const kebab = str.match(/-/g) || []
   const snake = str.match(/_/g) || []
