@@ -1,3 +1,7 @@
+## Best practices
+
+- post dates to REST API (or graphql, anything that is sent to the server) as RFC3339. It is based on ISO8601, so it should be interchangeable
+- return date as UTC so that client can perform the conversion
 
 ## Issue with UTC conversion.
 
@@ -100,3 +104,31 @@ When are the hour and minute hands of a clock superimposed?
 
 H is an integer in the range 0–11. This gives times of: 0:00, 1:05.45, 2:10.90, 3:16.36, 4:21.81, 5:27.27. 6:32.72, 7:38.18, 8:43.63, 9:49.09, 10:54.54, and 12:00. (0.45 minutes are exactly 27.27 seconds.)
 ```
+
+## Initialize JS Date to a particular timezone
+
+```js
+function changeTimezone(date, ianatz) {
+  // Suppose the date is 12:00 UTC.
+  const invdate = new Date(date.toLocaleString('en-US', {
+    timeZone: ianatz
+  }))
+  
+  // Then invdate will be 07:00 in Toronto,
+  // and the diff is 5 hours.
+  const diff = date.getTime() - invdate.getTime()
+  
+  // So 12:00 in Toronto is 17:00 UTC.
+  return new Date(date.getTime() + diff)
+}
+
+// Malaysia is +8, Toronto is -4, total difference is 12 hours.
+const there = new Date('Thu, 06 Aug 2020 12:00:00 GMT')
+const here = changeTimezone(there, 'America/Toronto')
+there + ' ' + here
+```
+
+
+## References
+
+- https://date-fns.org/v2.15.0/docs/Time-Zones
