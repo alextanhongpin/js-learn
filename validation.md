@@ -99,3 +99,20 @@ class Appointment {
 Others:
 - using jsonschema
 - using class-validator (typescript)
+
+
+## Basic type validation
+
+```js
+function isDate(unknown) {
+  return unknown instanceof Date && !isNaN(unknown)
+}
+
+function isArray(unknown) {
+  return Array.isArray(unknown)
+}
+
+function isObject(unknown) {
+  return unknown === Object(unknown) && !isArray(unknown)
+}
+```
