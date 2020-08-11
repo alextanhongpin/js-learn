@@ -1,5 +1,22 @@
 ## Appointment Class
 ```js
+function isValidDate(date) {
+  return date instanceof Date && !isNaN(date)
+}
+
+function isWeekend() {
+  return false
+}
+
+function startOfDay(date) {
+  if (!isValidDate(date)) throw new Error('startOfDayError: date is invalid')
+  return new Date(date).setHours(0, 0, 0, 0)
+}
+
+function endOfDay(date) {
+  if (!isValidDate(date)) throw new Error('endOfDayError: date is invalid')
+  return new Date(date).setHours(23, 59, 59, 999)
+}
 // Appointment is a class to manage and check appointment dates.
 // It should be able to compute the start/end date of the appointment
 // based on the criteria provided, and check if the appointment is valid.
@@ -35,12 +52,13 @@ class Appointment {
   }
   validateAndReject() {
     const errors = this.validate()
-    const msg = Object.values(errors).join('\n')
-    if (Object.values(errors).length) throw new Error(Object.values(errors).filter(Boolean).join('\n'))
+    const messages = Object.values(errors).filter(Boolean)
+    if (messages.length) throw new Error(messages.join('\n'))
   }
   validate() {
     const start = this.startDate
     const end = this.endDate
+    
     const {
       minDate,
       maxDate,
@@ -49,6 +67,7 @@ class Appointment {
       allowedDays,
       publicHolidays
     } = this
+    
     const validations = {
       startDate: [
         !start && 'startDate is required',
@@ -61,32 +80,33 @@ class Appointment {
         !isValidDate(end) && 'endDate is invalid',
         maxDate && end > maxDate && 'endDate cannot be greater than maxDate'
       ],
-      minDate: [
-        minDate && maxDate && minDate > maxDate && 'minDate cannot be greater than maxDate'
+      minDate: minDate && [
+        maxDate && minDate > maxDate && 'minDate cannot be greater than maxDate'
       ],
-      deniedDays: [
-        deniedDays && deniedDays.includes(start) && 'deniedDays includes startDate',
-        deniedDays && deniedDays.includes(end) && 'deniedDays includes endDate',
+      deniedDays: deniedDays?.length && [
+        deniedDays.includes(start) && 'deniedDays includes startDate',
+        deniedDays.includes(end) && 'deniedDays includes endDate',
       ],
-      allowedDays: [
-        allowedDays && !Array.isArray(allowedDays) && 'allowedDays is not an array',
-        allowedDays?.length && !allowedDays.includes(start) && 'allowedDays does not include startDate',
-        allowedDays?.length && !allowedDays.includes(end) && 'allowedDays does not include endDate',
+      allowedDays: allowedDays?.length ? [
+        !Array.isArray(allowedDays) && 'allowedDays is not an array',
+        !allowedDays.includes(start) && 'allowedDays does not include startDate',
+        !allowedDays.includes(end) && 'allowedDays does not include endDate',
       ],
-      skipWeekends: [
-        skipWeekends && isWeekend(start) && 'startDate must not be weekend',
-        skipWeekends && isWeekend(end) && 'endDate must not be weekend'
+      skipWeekends: skipWeekends && [
+        isWeekend(start) && 'startDate must not be weekend',
+        isWeekend(end) && 'endDate must not be weekend'
       ],
-      publicHolidays: [
-        publicHolidays && publicHolidays.includes(start) && 'publicHolidays includes startDate',
-        publicHolidays && publicHolidays.includes(end) && 'publicHolidays includes endDate'
-
+      publicHolidays: publicHolidays?.length && [
+        publicHolidays.includes(start) && 'publicHolidays includes startDate',
+        publicHolidays.includes(end) && 'publicHolidays includes endDate'
       ]
     }
+    
     const errors = {}
     for (let field in validations) {
       errors[field] = validations[field].find(Boolean)
     }
+    
     return errors
   }
 
@@ -131,23 +151,4 @@ const appointment = new Appointment({
   allowedDays: [new Date()]
 })
 console.log(appointment.validate())
-
-// Helpers
-function isValidDate(date) {
-  return date instanceof Date && !isNaN(date)
-}
-
-function isWeekend() {
-  return false
-}
-
-function startOfDay(date) {
-  if (!isValidDate(date)) throw new Error('startOfDayError: date is invalid')
-  return new Date(date).setHours(0, 0, 0, 0)
-}
-
-function endOfDay(date) {
-  if (!isValidDate(date)) throw new Error('endOfDayError: date is invalid')
-  return new Date(date).setHours(23, 59, 59, 999)
-}
 ```
