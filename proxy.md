@@ -126,3 +126,30 @@ setTimeout(() => {
   console.log(cache.age)
 }, 1500)
 ```
+
+
+## Allow accessing snake case values
+
+```js
+function snakeToCamel(str) {
+  return str.replace(/_([a-z0-9])/ig, (match, p1) => p1.toUpperCase())
+}
+const snakeCaseHandler = {
+  get(target, prop, receiver) {
+    if (prop in target) {
+      return Reflect.get(...arguments)
+    }
+    const camel = snakeToCamel(prop)
+    if (camel in target) {
+      return Reflect.get(target, camel, receiver)
+    }
+    return 'helloo'
+  }
+}
+const obj = {
+  hello: 'world',
+  helloWorld: 'nice'
+}
+const o = new Proxy(obj, snakeCaseHandler)
+assert(o.helloWorld, o.hello_world)
+```
