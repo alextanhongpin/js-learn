@@ -215,7 +215,7 @@ spiralMatrix(matrix)
 ```
 
 ## Set columns and rows to zero if one of the cell is zero
-```
+```js
 const m = [
     [0, 2, 3],
     [1, 1, 3],
@@ -242,4 +242,19 @@ function setZeros(matrix) {
 }
 
 console.log(setZeros(m))
+```
+
+
+## Find what is added/removed from two different array
+
+```js
+const arr1 = [1, 2, 4, 9]
+const arr2 = [1, 1]
+
+// Find the union of both array.
+const combined = [...arr1, ...arr2]
+const added = combined.filter(i => !arr1.includes(i))
+const removed = combined.filter(i => !arr2.includes(i))
+
+console.log(added, removed)
 ```
