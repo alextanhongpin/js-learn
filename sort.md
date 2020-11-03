@@ -2,58 +2,69 @@
 
 
 ```js
-function byAge(a, b) {
-  if (a.age === b.age) {
+// If the age is smaller, it will appear first.
+function byAgeAsc(l, r) {
+  // If left value is greater than right value, assign 1 (move to right)
+  if (l.age > r.age) {
+    return 1
+  } else if (l.age < r.age) {
+    // If left value is less than right value, assign -1 (move to left)
+    return -1
+  } else {
     return 0
   }
-  // Ascending order.
-  if (a.age > b.age) {
-    // If a is larger than b, increment position of b by 1 in array.
-    return 1
-  }
-  return -1
 }
 
-function byName(a, b) {
-  if (a.name.length === b.name.length) {
+function byNameAsc(l, r) {
+  if (l.name === r.name) {
     return 0
   }
-  if (a.name.length > b.name.length) {
-    return 1
-  }
-  return -1
+  // If left value is smaller than right value, assign -1 (left position),
+  // else assign 1 (right position).
+  return l.name.localeCompare(r.name)
 }
 
-function reverse(order) {
-  return function() {
-    return -1 * order.apply(this, arguments)
-  }
-}
-
-function orderMultiple(...orderFns) {
-  return function(a, b) {
-    for (let fn of orderFns) {
-      const order = fn(a, b)
-      if (order !== 0) {
-        return order
-      }
+function sortBy(...sortFns) {
+  return (a, b) => {
+    let result
+    for (let sortFn of sortFns) {
+      result = sortFn(a, b)
+      if (result !== 0) return result
     }
-    return 0
+    return result
   }
 }
-const people = [{
-  age: 10
-}, {
-  name: 'john',
-  age: 12
-}, {
-  name: 'johny',
-  age: 12
-}, {
-  age: 22
-}]
-const sorted = people.sort(orderMultiple(byAge, reverse(byName)))
-console.log(JSON.stringify(sorted))
+
+function reverse(orderFn) {
+  return function(a, b) {
+    return -1 * orderFn(a, b)
+  }
+}
+
+const users = [{
+    name: 'John',
+    age: 10,
+  },
+  {
+    name: 'Jessie',
+    age: 11
+  },
+  {
+    name: 'Boy',
+    age: 11
+  },
+  {
+    name: 'Baby',
+    age: 10
+  },
+  {
+    name: 'Adult',
+    age: 30
+  }
+]
+console.log([...users].sort(sortBy(byAgeAsc, byNameAsc)))
+console.log([...users].sort(sortBy(byAgeAsc, reverse(byNameAsc))))
+console.log([...users].sort(sortBy(reverse(byAgeAsc), byNameAsc)))
 ```
 
 ## Alphabetical sorting
