@@ -1,58 +1,67 @@
 # Batch
 
 ```js
-const batch = (arr = [], bucket = 10) => {
-  const len = arr.length
-  const num = Math.ceil(len / bucket)
+function batch(arr, bucket = 10) {
   const result = []
-  for (let i = 0; i < num; i += 1) {
-    const start = i * bucket
-    const end = Math.min((i + 1) * bucket, len)
-    result.push(arr.slice(start, end))
+  const n = Math.ceil(arr.length / bucket)
+  for (let i = 0; i < n; i++) {
+    result.push(arr.slice(i * bucket, (i + 1) * bucket))
   }
   return result
 }
+console.log(batch([1, 2, 3, 4, 5, 6, 7, 8], 3))
+// [[1,2,3], [4,5,6], [7,8]]
 ```
 
-Better, using generator:
+The above solution will compute the batch results, which can be bad for performance as it will take up spaces to store the computed result. A better solution is to use generator so that the batch results will only be computed when it is needed:
 
 ```js
 function* batch(arr, n = 10) {
-  let copy = [...arr]
-  while (copy.length) {
-    yield copy.splice(0, n)
+  const result = [...arr]
+  while (result.length) {
+    yield result.splice(0, n)
   }
 }
 
-for (let b of batch([1, 2, 3, 4, 5, 6, 7, 8], 3)) {
-  console.log(b)
+for (const bucket of batch([1, 2, 3, 4, 5, 6, 7, 8], 3)) {
+  console.log(bucket)
 }
+// [1, 2, 3]
+// [4, 5, 6]
+// [7, 8]
 ```
 
 ## Check nested
 
+This example demonstrates how to safely get nested object keys.
+
 ```js
+function dig(obj, ...keys) {
+  let o = {
+    ...obj
+  }
+  for (let key of keys) {
+    if (o.hasOwnProperty(key)) {
+      o = o[key]
+      continue
+    }
+    return undefined
+  }
+  return o
+}
+
 const obj = {
   a: {
     b: {
-      c: 1
+      c: 'hello world'
     }
   }
 }
+console.log(dig(obj, 'a', 'b', 'c')) // hello world
 
-const dig = (obj, ...keys) => {
-  let child = obj
-  for (let key of keys) {
-    if (child.hasOwnProperty(key)) {
-      child = child[key]
-      continue
-    } 
-    return undefined
-  }
-  return child
-}
-
-alert(dig(obj, 'a', 'b', 'd'))
+console.log(dig(obj, 'a')) // { b: { c: 'hello world'}}
+console.log(dig(obj, 'x')) // undefined
+console.log(dig(obj, 'a', 'b', 'd')) // undefined
 ```
 
 ## Array Operation
@@ -83,41 +92,52 @@ console.log(a, b, c, d)
 ## Find two array elements in an array that adds up to a number.
 
 ```js
-function sumOfTarget(data, target) {
-  const hash = {}
-  for (let item of data) {
-    if (hash[9 - item]) {
-      console.log(item, 9 - item)
-      return [item, 9 - item]
+function sumOfTarget(numbers, target) {
+  const cache = {}
+  for (let n of numbers) {
+    if (cache[target - n]) {
+      return [target - n, n]
+    } else {
+      cache[n] = true
     }
-    hash[item] = true
   }
-  return -1
+  return null
 }
 
-console.log(sumOfTarget([1, 2, 3, 4, 5], 9))
+const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+const target = 11
+console.log(sumOfTarget(numbers, target)) // [5, 6]
 ```
+
+## Find the two numbers that create the target sum given that the array is sorted.
 
 ```js
-function sumOfSortedTarget(array, target) {
-  array.sort()
+function sumOfSortedArray(numbers, target) {
+  numbers.sort()
+
   let i = 0
-  let j = array.length - 1
-  while (i < array.length - 1) {
-    const left = array[i]
-    const right = array[j]
-    if ((left + right) > target) {
-      j--
-    } else if ((left + right) < target) {
+  let j = numbers.length - 1
+  while (i < numbers.length - 1 || j > -1) {
+    const left = numbers[i]
+    const right = numbers[j]
+    const result = left + right
+    if (result < target) {
       i++
-    } else {
+    } else if (result > target) {
+      j--
+    } else if (result === target) {
       return [left, right]
+    } else {
+      return null
     }
   }
-  return -1
+  return null
 }
-console.log(sumOfSortedTarget([1, 2, 3, 4, 5], 9))
+const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+const target = 11
+console.log(sumOfSortedArray(numbers, target)) // [2, 9]
 ```
+
 ## Find the median of two sorted array of the same size.
 ```js
 function median(arr) {

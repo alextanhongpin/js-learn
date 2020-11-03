@@ -38,3 +38,22 @@ isRequired({
 }, 'hello', 'world', 'car')
 // Error: world is required
 ```
+
+## Validating Multiple Fields v2
+
+```js
+function isRequired(obj) {
+  for (let key in obj) {
+    const isDefined = obj[key] !== null && obj[key] !== undefined
+    if (!isDefined) {
+      throw new Error(`${key} is required`)
+    }
+  }
+  return true
+}
+
+isRequired({
+  hello: '1',
+  world: undefined
+})
+```
