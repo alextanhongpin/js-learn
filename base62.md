@@ -1,54 +1,34 @@
 # Base62 Encoder/Decoder with JS
 
 ```js
-let chars = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789']
+const Base62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-function encode(i) {
-  const result = []
-  let rem = i
-  while (rem > 0) {
-    let mod = (rem) % 62
-    // Mod zero is 0, but we can't get characters at index -1
-    if (!mod) {
-      // Set the cycle to 61.
-      result.unshift(chars[61])
-      // Last character, once divided by 62, will return 1, but we do not need to repeat the cycle. Terminate early.
-      if (rem === 62) {
-        break
-      }
-    } else {
-      result.unshift(chars[mod - 1])
-    }
-    rem = Math.floor(rem / 62)
+function toBase62(n) {
+  if (n === 0) return Base62[n]
+  let result = ''
+  while (n > 0) {
+    result = Base62[n % 62] + result
+    n = Math.floor(n / 62)
   }
-  return result.join('')
+  return result
 }
 
-function decode(s) {
-  let sum = 0
-  let i = 0
-  for (let c of s) {
-    sum = sum * 62 + (chars.indexOf(c) + 1)
-    i += 1
+function fromBase62(s) {
+  let result = 0
+  for (let char of s) {
+    result = result * 62 + Base62.indexOf(char)
   }
-  return sum
+  return result
 }
 
-let nato = ["Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "Xray", "Yankee", "Zulu"]
+for (let i = 0; i < 100; i++) {
+  console.log(i, toBase62(i), fromBase62(toBase62(i)) === i)
+}
 
-for (let c of nato) {
-  if (encode(decode(c)) !== c) {
-    console.log('want', c, 'got', encode(decode(c)), decode(c))
-  }
-}
-for (let i = 0; i < 1000000; i += 1) {
-  if (!decode(encode(i)) === i) {
-    console.log('error')
-  }
-}
-for (let c of chars) {
-  if (encode(decode(c)) !== c) {
-    console.log('want', c, 'got', encode(decode(c)), decode(c))
-  }
+
+const nato = ["Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "Xray", "Yankee", "Zulu"]
+
+for (let n of nato) {
+  console.log(n, fromBase62(n), toBase62(fromBase62(n)) === n)
 }
 ```
