@@ -54,3 +54,28 @@ Output:
   e.i: Tue Nov 03 2020 17:41:44 GMT+0800 (Malaysia Time) {}
 }
 ```
+
+## Serializing
+
+This example demonstrates how to override the stringify method for class:
+
+```js
+class Hello {
+  constructor(name) {
+    this.name = name
+    this.int = 1
+    this.str = 'hello'
+    this.bool = false
+  }
+  toJSON() {
+    const o = Object.fromEntries(Object.entries(this))
+    return {
+      ...o,
+      type: this.constructor.name
+    }
+  }
+}
+
+const hello = new Hello('hello world')
+JSON.stringify(hello)
+```
