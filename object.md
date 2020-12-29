@@ -57,7 +57,7 @@ Output:
 
 ## Serializing
 
-This example demonstrates how to override the stringify method for class:
+This example demonstrates how to override the stringify method for class, and vice versa from object to class:
 
 ```js
 class Hello {
@@ -68,14 +68,26 @@ class Hello {
     this.bool = false
   }
   toJSON() {
-    const o = Object.fromEntries(Object.entries(this))
+    const obj = Object.fromEntries(Object.entries(this))
     return {
-      ...o,
+      ...obj,
       type: this.constructor.name
     }
+  }
+  static fromJSON(obj) {
+    const cls = new Hello()
+    for (let key in obj) {
+      if (cls.hasOwnProperty(key)) {
+        cls[key] = obj[key]
+      }
+    }
+    return cls
   }
 }
 
 const hello = new Hello('hello world')
-JSON.stringify(hello)
+console.log('cls', hello)
+const str = JSON.stringify(hello)
+console.log('str', str)
+console.log(Hello.fromJSON(JSON.parse(str)))
 ```
