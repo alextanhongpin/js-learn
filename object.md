@@ -74,8 +74,11 @@ class Hello {
       type: this.constructor.name
     }
   }
+  // This can be troublesome if we need to extend the class and reuse.
   static fromJSON(obj) {
-    const cls = new Hello()
+    // Dynamic classname.
+    const Class = new Function(`return ${this.name}`)()
+    const cls = new Class()
     for (let key in obj) {
       if (cls.hasOwnProperty(key)) {
         cls[key] = obj[key]
@@ -89,5 +92,5 @@ const hello = new Hello('hello world')
 console.log('cls', hello)
 const str = JSON.stringify(hello)
 console.log('str', str)
-console.log(Hello.fromJSON(JSON.parse(str)))
+console.log('cls', Hello.fromJSON(JSON.parse(str)))
 ```
