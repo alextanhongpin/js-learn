@@ -10,7 +10,7 @@ function execute(count) {
   const conditions = [{
       seconds: 5,
       threshold: 10000
-    }, // Run every 5 seconds or when the threshold is 10,000. Note that it will run at seconds 5, 10, 15...., it is not relative to when the code execute.
+    }, // Run every 5 seconds when the threshold is 10,000. Note that it will run at seconds 5, 10, 15...., it is not relative to when the code execute.
     {
       seconds: 60,
       threshold: 1000
@@ -22,10 +22,10 @@ function execute(count) {
     {
       seconds: 600,
       threshold: 1
-    } // Run every 5 minutes, or when the threshold is 1. Again, it will run at every 5, 10, 15...minutes.
+    } // Run every 5 minutes when the threshold is 1. Again, it will run at every 5, 10, 15...minutes.
   ]
   const seconds = Math.floor(Date.now() / 1000)
-  return conditions.some((condition) => seconds % condition.seconds === 0 || count >= condition.threshold)
+  return conditions.some((condition) => seconds % condition.seconds === 0 && count >= condition.threshold)
 }
 
 setInterval(() => {
