@@ -102,3 +102,58 @@ async function main() {
 
 main().catch(console.error)
 ```
+
+## A look into async error handling
+
+```js
+
+const delay = (duration = 1000) => new Promise((resolve) => setTimeout(resolve, duration))
+const task = (error) => {
+  if (error) {
+      throw new Error('bad')
+  }
+  return delay(100)
+}
+const createTask = (error) => {
+  return () => task(error)
+}
+
+
+// Immediately exit on error.
+async function exitOnError(tasks) {
+  let completed = 0
+  for await (let task of tasks) {
+    try {
+      await task()
+      completed++
+    } catch (error) {
+      break
+    }
+  }
+  return completed
+}
+
+async function processAllEvenWithError(tasks) {
+  const result = await Promise.allSettled(tasks.map(async(task) => task()))
+  const completed = result.flatMap(task => task.status === 'fulfilled' ? task.value : [])
+  return completed.length
+}
+
+async function allOrNone(tasks) {
+  try {
+    const result = await Promise.all(tasks.map(task => task()))
+    return result.length
+  } catch (error) {
+    return 0
+  }
+}
+
+async function main() {
+  const tasks = [createTask(), createTask(true), createTask()]
+  console.log('exitOnError', await exitOnError(tasks))
+  console.log('processAllEvenWithError', await processAllEvenWithError(tasks))
+  console.log('allOrNone', await allOrNone(tasks))
+}
+
+main().catch(console.error)
+```
