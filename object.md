@@ -55,6 +55,90 @@ Output:
 }
 ```
 
+## Flatten keys and arrays
+
+```js
+const obj = {
+  number: 1,
+  string: 'hello',
+  boolean: 'some boolean',
+  nested: {
+    hello: 'world',
+    another: {
+      world: 'hello'
+    }
+  },
+  array: [1, 2, 3],
+  anotherArray: [{
+      one: 'two'
+    }, {
+      'three': 4
+    },
+    [1, 2, 3]
+  ],
+  test: [
+    [1, 2],
+    [3, 4]
+  ]
+}
+
+function isArray(unknown) {
+  return Array.isArray(unknown)
+}
+
+function isObject(unknown) {
+  return unknown === Object(unknown) && !isArray(unknown)
+}
+
+
+function flatten(obj, prefix = null, result = {}) {
+  if (isObject(obj)) {
+    for (let key in obj) {
+      const combinedKey = [prefix, key].filter(Boolean).join('.')
+      if (isObject(obj[key])) {
+        flatten(obj[key], combinedKey, result)
+      } else if (isArray(obj[key])) {
+        flatten(obj[key], combinedKey, result)
+      } else {
+        result[combinedKey] = obj[key]
+      }
+    }
+  } else if (isArray(obj)) {
+    const createKey = (i) => [prefix, i].filter(s => s !== null).join('.')
+    obj.forEach((item, i) => {
+      flatten(item, createKey(i), result)
+    })
+  } else {
+    result[prefix] = obj
+  }
+  return result
+}
+
+console.log(JSON.stringify(flatten(obj), null, 2))
+```
+Output:
+```json
+{
+  "number": 1,
+  "string": "hello",
+  "boolean": "some boolean",
+  "nested.hello": "world",
+  "nested.another.world": "hello",
+  "array.0": 1,
+  "array.1": 2,
+  "array.2": 3,
+  "anotherArray.0.one": "two",
+  "anotherArray.1.three": 4,
+  "anotherArray.2.0": 1,
+  "anotherArray.2.1": 2,
+  "anotherArray.2.2": 3,
+  "test.0.0": 1,
+  "test.0.1": 2,
+  "test.1.0": 3,
+  "test.1.1": 4
+}
+```
+
 ## Serializing
 
 This example demonstrates how to override the stringify method for class, and vice versa from object to class:
