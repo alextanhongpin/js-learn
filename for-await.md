@@ -337,3 +337,46 @@ function Retry (threshold = 3, algorithm = Jitter(500, 1000)) {
 
 main().catch(console.error)
 ```
+
+
+## Implementing Retry Clean Code
+
+```js
+async function sleep(duration = 1000) {
+  return new Promise((resolve) => setTimeout(resolve, duration))
+}
+
+const strategies = {
+  linear: i => i * 1000,
+  exponential: i => Math.pow(2, i) * 1000,
+  jitter: i => Math.round(strategies.exponential(i) / 2 * (1 + Math.random()))
+}
+
+async function* retry(n = 10, strategy = 'linear') {
+  const algo = strategies[strategy] || strategies.jitter
+  for (let i = 0; i <= n; i++) {
+    const duration = algo(i)
+    await sleep(duration)
+    yield duration
+  }
+  throw new Error('timeout')
+}
+
+async function main() {
+  console.log('linear:', Array(10).fill(0).map((_, i) => strategies.linear(i)))
+  console.log('exponential:', Array(10).fill(0).map((_, i) => strategies.exponential(i)))
+  console.log('jitter:', Array(10).fill(0).map((_, i) => strategies.jitter(i)))
+
+  for await (const duration of retry(3)) {
+    console.log('slept', duration)
+    if (Math.random() < 0.2) {
+      console.log('performing task successfully')
+      break
+    }
+    console.log('task failed')
+  }
+  console.log('done')
+}
+
+main().catch(console.error)
+```
