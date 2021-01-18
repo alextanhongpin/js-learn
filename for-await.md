@@ -480,6 +480,10 @@ main().catch(console.error)
 ## Combining batchPromise with retry and timeout
 
 ```js
+async function asyncSetImmediate() {
+  return new Promise(resolve => setImmediate(resolve))
+}
+
 async function* batchPromise(tasks, {
   batchSize = 5,
   retry = 10,
@@ -501,6 +505,9 @@ async function* batchPromise(tasks, {
     })
 
     yield* await Promise.allSettled(pending)
+
+    // Allow context switching for other tasks.
+    await asyncSetImmediate()
   }
 }
 
