@@ -1,3 +1,10 @@
+# for-await
+
+
+When batching tasks, always put an async `setImmediate` in between:
+https://github.com/alextanhongpin/js-learn/blob/master/set-immediate.md
+
+
 ## for await...of
 
 ```js
@@ -362,6 +369,17 @@ async function* retry(n = 10, strategy = 'linear') {
   throw new Error('timeout')
 }
 
+async function withRetry(task, n=10) {
+  for await (const duration of retry(n)) {
+    try {
+      const result = await task()
+      return result
+    } catch (error) {
+      continue
+    }
+  }
+}
+
 async function main() {
   console.log('linear:', Array(10).fill(0).map((_, i) => strategies.linear(i)))
   console.log('exponential:', Array(10).fill(0).map((_, i) => strategies.exponential(i)))
@@ -376,6 +394,10 @@ async function main() {
     console.log('task failed')
   }
   console.log('done')
+  
+  await withRetry(() => {
+    throw new Error('bad request')
+  }, 3)
 }
 
 main().catch(console.error)
