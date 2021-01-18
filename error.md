@@ -4,7 +4,7 @@
 class TimeoutError extends Error {
   constructor(props) {
     super(props)
-    this.name = 'TimeoutError'
+    this.name = this.constructor.name // 'TimeoutError'
     this.message = 'timeout exceeded'
   }
 }
