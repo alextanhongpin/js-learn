@@ -7,26 +7,58 @@ https://github.com/alextanhongpin/js-learn/blob/master/set-immediate.md
 
 ## for await...of
 
+There's not much difference using `for await...of` and `Promise.all`. In fact, they are interchangable:
 ```js
-async function asyncTask(duration = 1000) {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      console.log('completed')
-      resolve(1)
-    }, duration)
-  })
+async function sleep(duration = 1000) {
+  console.log('starting')
+  return new Promise((resolve) => setTimeout(resolve, duration, duration))
 }
 
-async function main() {
+async function* batch(tasks, n = 5) {
+  let i = 0
+  while (i * n < tasks.length) {
+    const todos = tasks.slice(i * n, (i + 1) * n)
+    const result = await Promise.all(todos.map(fn => fn()))
+    yield* result
+    i++
+  }
+}
+
+async function concurrentForAwait() {
+  console.log('testing concurrentForAwait')
   console.time()
-  const tasks = Array(100).fill(() => asyncTask(1000)).map(fn => fn())
-  for await (let task of tasks) {
-    console.log(task)
+  const tasks = [sleep(), sleep(2000), sleep()] // Start all the tasks.
+
+  // Since we are looping, we will not know which task completes first. If the first item in the loop takes a long time, then it will slow down the rest.
+  for await (let result of tasks) {
+    // Saves a step if you want work on the individual results separately, compared to Promise.all.
+    console.log(result)
   }
   console.timeEnd()
 }
 
-main().catch(console.error)
+async function concurrentPromiseAll() {
+  console.log('testing concurrentPromiseAll')
+  console.time()
+  const results = await Promise.all([sleep(), sleep(2000), sleep()]) // Start all the tasks.
+  console.timeEnd()
+}
+
+async function concurrentBatch() {
+  console.log('testing concurrentBatch')
+  console.time()
+  const tasks = Array(11).fill(() => sleep())
+  for await (let result of batch(tasks)) {
+    console.log(result)
+  }
+  console.timeEnd()
+}
+
+async function main() {
+  await concurrentForAwait()
+  await concurrentPromiseAll()
+  await concurrentBatch()
+}
 ```
 
 
@@ -169,6 +201,8 @@ main().catch(console.error)
 
 ## Rate-limit and Timeout
 
+NOTE: Old version, see version below.
+
 `Promise.all` will wait for all the promises to complete. Hence, we can introduce a rate-limit by inserting an async timeout that will take a given duration, say 1 second. Hence, the `Promise.all` will only complete after 1 seconds (or more if other functions took longer than 1s). To prevent the function from stalling, we can introduce a timeout mechanism with `Promise.race`. We will race the other promises (with the ratelimit function) with another delay timeout. The fastest one will resolve first. The implementation is demonstrated below. Here we return an array of two arguments (similar like `golang`), whereby the first item is the response, and the second is an `error` object. The `Promise.all` should not fail, since if there is an error thrown in the function, the whole operation will fail.
 
 ```js
@@ -250,7 +284,7 @@ main().catch(console.error)
 
 
 ## With Retry
-
+Old version, see version below.
 ```js
 // batching Promises.all
 
@@ -349,6 +383,13 @@ main().catch(console.error)
 ## Implementing Retry Clean Code
 
 ```js
+class RetryError extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'RetryError'
+  }
+}
+
 async function sleep(duration = 1000) {
   return new Promise((resolve) => setTimeout(resolve, duration))
 }
@@ -366,7 +407,7 @@ async function* retry(n = 10, strategy = 'linear') {
     await sleep(duration)
     yield duration
   }
-  throw new Error('timeout')
+  throw new RetryError('too many retries')
 }
 
 async function withRetry(task, n=10) {
@@ -398,6 +439,95 @@ async function main() {
   await withRetry(() => {
     throw new Error('bad request')
   }, 3)
+}
+
+main().catch(console.error)
+```
+
+## With Timeout
+
+```js
+class TimeoutError extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'TimeoutError'
+  }
+}
+
+const timeout = async (duration) => {
+  await sleep(duration)
+  throw new TimeoutError('timeout')
+}
+
+async function withTimeout(task, duration = 1000) {
+  const result = await Promise.race([task(), timeout(duration)])
+  return result
+}
+
+async function main() {
+  await withTimeout(() => sleep(250), 500)
+  console.log('done')
+
+  try {
+    await withTimeout(sleep, 500)
+  } catch (error) {
+    console.log(error.name, error.message, error instanceof TimeoutError)
+  }
+}
+main().catch(console.error)
+```
+
+## Combining batchPromise with retry and timeout
+
+```js
+async function* batchPromise(tasks, {
+  batchSize = 5,
+  retry = 10,
+  timeout = 1000
+}) {
+  for (let i = 0; i < tasks.length; i += batchSize) {
+    const todos = tasks.slice(i, i + batchSize)
+    const pending = todos.map(fn => {
+      if (timeout > 0 && retry > 0) {
+        return withRetry(() => withTimeout(fn, timeout), retry)
+      }
+      if (timeout > 0) {
+        return withTimeout(fn, timeout)
+      }
+      if (retry > 0) {
+        return withRetry(fn, retry)
+      }
+      return fn()
+    })
+
+    yield* await Promise.allSettled(pending)
+  }
+}
+
+async function main() {
+  // Testing retries. 
+  // const tasks = Array(11).fill(() => { throw new Error('bad request' )})
+
+  // Testing timeouts. NOTE. It will retry due to timeout, so disable retry.
+  // const tasks = Array(11).fill(() => sleep(2000))
+  const tasks = Array(11).fill(() => {
+    if (Math.random() < .3) {
+      console.log('failed')
+      throw new Error('bad request')
+    }
+    sleep(Math.random() < .5 ? 1000 : 2000)
+    return true
+  })
+  const options = {
+    batchSize: 10,
+    timeout: 1500,
+    retry: 3
+  }
+  const batched = batchPromise(tasks, options)
+  for await (let result of batched) {
+    console.log('result', result)
+  }
+  console.log('done')
 }
 
 main().catch(console.error)
