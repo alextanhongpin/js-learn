@@ -587,8 +587,27 @@ function snakeCaseObject(o = {}) {
 }
 ```
 
+
 ## References
 
 - http://www-igm.univ-mlv.fr/~lecroq/string/node14.html
 - https://www.javatpoint.com/daa-boyer-moore-algorithm
 - https://www.javatpoint.com/daa-knuth-morris-pratt-algorithm
+
+
+## Detect Separators
+
+```js
+function detect(input, separators = [',', ';', '|', '\t', '\n']) {
+    const cache = {}
+    const count = (sep) => {
+        if (sep in cache) return cache[sep]
+        return cache[sep] = input.split(sep).length
+    }
+    return separators.reduce((prev, curr) =>
+        count(prev) > count(curr) ? prev : curr
+    )
+}
+
+detect('hello,world') // Output: ','
+```
