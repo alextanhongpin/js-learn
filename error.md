@@ -157,3 +157,63 @@ async function main() {
 
 main().catch(console.error)
 ```
+
+
+## Typescript Error 
+
+```typescript
+interface User {
+  id: string
+  name: string
+}
+
+class DomainError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = this.constructor.name
+  }
+}
+
+class UserError extends DomainError {}
+
+class UserNotFoundError extends UserError {
+  constructor(userId: string) {
+    super(`User (${userId}) not found`)
+  }
+}
+
+type UserResult = User | UserError
+
+// Problem: errors are not typed ...
+function getUserById(id: string): UserResult {
+  try {
+    throw new UserNotFoundError('xyz')
+  } catch(err: any) {
+    if (err instanceof UserError) {
+      console.log(err.name)
+      console.log(err.message)
+    }
+    return err
+  }
+} 
+
+const err = getUserById('1')
+if (err instanceof UserError) {
+  console.log('error finding user', err)
+}
+
+// Same goes for Promise - errors are not typed.
+async function findUserById(id: string): Promise<User> {
+  throw new UserNotFoundError(id)
+}
+
+type Ok<T> = {result: T, error?: never}
+type Err<E> = {result?: never, error: E}
+type Result<T, E> = Ok<T> | Err<E>
+
+// Is this better? User still needs to manually check the types ... 
+async function findUserResultById(id: string): Promise<Result<User, UserError>> {
+  const error: UserError = new UserNotFoundError(id)
+  return { error }
+}
+```
