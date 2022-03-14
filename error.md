@@ -217,3 +217,84 @@ async function findUserResultById(id: string): Promise<Result<User, UserError>> 
   return { error }
 }
 ```
+
+
+## Alternative Error Pattern
+
+```typescript
+// https://www.reddit.com/r/typescript/comments/ouene2/need_suggestion_for_designing_discriminated_union/
+
+// Create a union type for each error type.
+type ValidationError = {
+  type: 'ValidationError',
+  details: Record<string, string>
+}
+type DatabaseError = {
+  type: 'DatabaseError',
+  details: any
+}
+type LibraryError = {
+  type: 'LibraryError',
+  details: any
+}
+type UnknownError = {
+  type: 'UnknownError'
+}
+type ErrorDetails = ValidationError | DatabaseError | LibraryError | UnknownError
+
+// Create a class that extends error that has details property. 
+class AppError extends Error {
+  details: ErrorDetails
+
+  constructor(message: string, details?: ErrorDetails) {
+    super(message)
+    this.details = details || { type: 'UnknownError' }
+  }
+
+  // Add some factory methods that create errors based on some source.
+
+  static fromMongodb(err: any): AppError {
+    if (err instanceof Error) {
+      return new AppError(err.message, { type: 'DatabaseError', details: {} })
+    }
+    return new AppError('Something happened when connecting to MongoDB', { type: 'UnknownError' })
+  }
+
+  match<T>(pattern: {
+    Validation: (err: ValidationError) => T,
+    Database: (err: DatabaseError) => T,
+    Library: (err: LibraryError) => T,
+    Unknown: () => T,
+  }): T {
+    if (this.details.type === 'ValidationError') {
+      return pattern.Validation(this.details)
+    } 
+    if (this.details.type === 'DatabaseError') {
+      return pattern.Database(this.details)
+    }
+    if (this.details.type === 'LibraryError') {
+      return pattern.Library(this.details)
+    }
+    return pattern.Unknown()
+  }
+}
+
+// Use AppError as the Right type
+type Result<T> = T | AppError
+
+// Usage.
+
+function fetchUsers(): Promise<Result<Users>> {
+  return mongodb.find().catch(AppError.fromMongodb)
+}
+
+app.use((err: AppError, req, res, next) => {
+  const statusCode = err.match({
+    Validation: _ => 400, 
+    Database: _ => 501,
+    Library: _ => 500,
+    Unknown: () => 500
+  })
+  return res.status(statusCode).send(err.details)
+})
+```
