@@ -36,7 +36,7 @@ class CSVParser {
     this.validateRequiredColumnsPresent(header, body);
 
     const keys = this.transformHeader(header);
-    return this.transformBody(body, keys);
+    return this.transformRows(body, keys);
   }
 
   // If the header can be mapped, return the key.
