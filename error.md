@@ -298,3 +298,41 @@ app.use((err: AppError, req, res, next) => {
   return res.status(statusCode).send(err.details)
 })
 ```
+
+## Error Cause
+
+Wrapping error is now possible with error cause:
+```js
+const parentError = new Error("bad request");
+const childError = new Error("bad parent", { cause: parentError });
+console.log(childError.cause);
+```
+
+Be careful when creating custom errors, this will be missing the error cause:
+```js
+// BAD
+class CustomError extends Error {
+  constructor() {
+    super(arguments)
+    this.name = this.constructor.name
+  }
+}
+const child = new Error('bad')
+const error = new CustomError('some custom error', {cause: child})
+console.log(child.cause, error.cause) // undefined undefined
+```
+
+Instead, do this:
+```js
+// GOOD
+class CustomError extends Error {
+  constructor(...args) {
+    super(...args)
+    this.name = this.constructor.name
+  }
+}
+
+const child = new Error('bad')
+const error = new CustomError('some custom error', {cause: child})
+console.log(child.cause, error.cause) // undefined Error: 'bad'
+```
