@@ -1,3 +1,22 @@
+## Conjunction and Disjunction
+
+```js
+// For 'or', use const lf = new Intl.ListFormat('ms', {type: 'disjunction'});
+// ms refers to malaysia language
+const lf = new Intl.ListFormat('ms');
+lf.format(['Frank']);
+// → 'Frank'
+lf.format(['Frank', 'Christine']);
+// → 'Frank and Christine'
+lf.format(['Frank', 'Christine', 'Flora']);
+// → 'Frank, Christine, and Flora'
+lf.format(['Frank', 'Christine', 'Flora', 'Harrison']);
+// → 'Frank, Christine, Flora, and Harrison'
+```
+
+Reference
+- https://v8.dev/features/intl-listformat
+
 ## Different string similarity
 
 ```js
