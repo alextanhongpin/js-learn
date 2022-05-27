@@ -421,3 +421,43 @@ try {
   }
 }
 ```
+
+
+## Papaparse
+
+```js
+const headers = {
+  CourseId: "courseId",
+  CourseTitle: "courseTitle",
+  DurationInSeconds: "durationInSeconds",
+  ReleaseDate: "releaseDate",
+  Description: "description",
+  AssessmentStatus: "assessmentStatus",
+  IsCourseRetired: "isCourseRetired",
+};
+
+let count = 1;
+Papa.parse(file, {
+  header: true,
+  skipEmptyLines: true,
+  transformHeader: (header) => {
+    return headers[header] ?? header;
+  },
+  // Transform is field level.
+  transform: (value, key) => {
+    if (key === "isCourseRetired") {
+      return value === "yes";
+    }
+    return value;
+  },
+  step: (result, parser) => {
+    count++;
+    if (count > 5) {
+      parser.abort();
+    }
+  },
+  complete: ({ data, errors, meta }) => {
+    console.log("completed", { data });
+  },
+});
+```
