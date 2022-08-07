@@ -336,3 +336,84 @@ const child = new Error('bad')
 const error = new CustomError('some custom error', {cause: child})
 console.log(child.cause, error.cause) // undefined Error: 'bad'
 ```
+
+
+## Typescript Error Handling
+
+```ts
+type Brand<K, T> = K & { __brand: T }
+
+type USD = Brand<number, 'USD'>
+
+class AppError extends Error {
+  constructor(...args: any[]) {
+    super(...args)
+    this.name = this.constructor.name
+  }
+}
+
+class USDError extends AppError {}
+
+class USDNegativeAmountError extends USDError {
+  constructor(amount: number, ...args: any[]) {
+    super(`amount cannot be negative: ${amount}`, ...args)
+  }
+}
+
+class USDParseError extends USDError {
+  constructor(input: unknown, ...args: any[]) {
+    super(`cannot parse ${JSON.stringify(input)} to USD`, ...args)
+  }
+}
+
+class USDFactory {
+  static create(value: number): USD {
+    const usd = value as USD
+    USDFactory.validate(usd)
+
+    return usd
+  }
+
+  // fromString attempts to cast a string to USD.
+  // No validation is done.
+  static fromString(value: string): USD {
+    const n = Number(value)
+    if (isNaN(n)) {
+      throw new USDParseError(value)
+    }
+
+    return n as USD
+  }
+  
+  // validate validates if the given USD is valid.
+  // Otherwise, USDError will be thrown.
+  static validate(usd: USD) {
+    if (usd < 0) {
+      throw new USDNegativeAmountError(usd)
+    }
+  }
+}
+
+try {
+  USDFactory.validate(-10 as USD)
+} catch (error) {
+  if (error instanceof USDError) {
+    console.log('is usd error', error)
+  }
+  if (error instanceof USDNegativeAmountError) {
+    console.log('is usd -tive amount error', error.cause)
+  }
+}
+
+try {
+  USDFactory.fromString('hello')
+} catch (error) {
+  if (error instanceof USDError) {
+    console.log('is usd error', error)
+  }
+  if (error instanceof USDParseError) {
+    console.log('is usd parse error', error)
+  }
+  console.log(error)
+}
+```
