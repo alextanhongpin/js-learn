@@ -194,3 +194,30 @@ setInterval(() => {
 
 rateLimiter.stop()
 ```
+
+## GCRA
+
+```js
+let tat = 0
+const rate = 15
+const period = 1
+const inverse = period/rate
+const count = 1
+const burst = 5
+for (let i = 0; i < 10; i++) {
+    const now = Math.floor(new Date().getTime()/1000) // seconds
+    tat = Math.max(tat, now)
+    const allow = now > tat - inverse * burst
+    if (allow) tat += inverse * count
+
+    const remaining = (period - (tat - now)) / inverse 
+    const retryIn = tat - now
+    const resetIn = Math.max(tat- inverse*burst - now, 0)
+    console.log({
+        tat, allow, now,
+        remaining,
+        retryIn,
+        resetIn
+    })
+}
+```
