@@ -417,3 +417,32 @@ try {
   console.log(error)
 }
 ```
+
+## Adding stack trace
+
+```js
+class AppError extends Error {
+  constructor(kind, code, message) {
+    super(message)
+    this.kind = kind
+    this.code = code
+    Error.captureStackTrace(this)
+  }
+}
+try {
+  throw new AppError('product not found', 'not_found', 'Product cannot be found')
+} catch(err) {
+  console.log(err.message)
+  console.log(err.stack)
+  /*
+  Product cannot be found
+VM118:21 Error: Product cannot be found
+    at new AppError (eval at execTransformedCode (main.js:1:11008), <anonymous>:13:27)
+    at Object.eval (eval at execTransformedCode (main.js:1:11008), <anonymous>:17:23)
+    at jscPlayground.main (eval at execTransformedCode (main.js:1:11008), <anonymous>:23:12)
+    at eval (eval at execTransformedCode (main.js:1:11008), <anonymous>:29:15)
+    at execTransformedCode (main.js:1:11008)
+    at main.js:1:11728
+  */
+}
+```
