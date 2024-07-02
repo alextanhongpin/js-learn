@@ -18,7 +18,10 @@ class Singleton {
         return `hi, ${input}`;
       case "pending":
         this.queue = [input];
-      case null:
+        break
+      case "failed":
+        throw this.error;
+      default:
         this.status = "pending";
         this.queue = [input];
         // Load the model.
@@ -31,8 +34,6 @@ class Singleton {
         } finally {
           return this.queue.length && this.send(this.queue.pop());
         }
-      case "failed":
-        throw this.error;
     }
   }
 }
