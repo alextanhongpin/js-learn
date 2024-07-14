@@ -44,7 +44,6 @@ setTimeout(() => {
 
 ## Aborting promises
 
-This doesn't work:
 ```js
 function asyncTask(signal: AbortSignal) {
     return new Promise((resolve, reject) => {
@@ -65,10 +64,11 @@ function asyncTask(signal: AbortSignal) {
 async function main() {
     const start = performance.now()
     const controller = new AbortController();
-    const task = await asyncTask(controller.signal)
+    // NOTE: This must be registered first!
     setTimeout(() => {
         controller.abort()
     }, 100)
+    const task = await asyncTask(controller.signal)
     const elapsed = (performance.now() - start) + 'ms'
     console.log(elapsed, task)
 }
